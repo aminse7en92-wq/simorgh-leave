@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>مدیریت مرخصی سیمرغ</title>
+  
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- فونت وزیرمتن -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+
+  <!-- کتابخانه تقویم شمسی -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/kamadatepicker@1.5.3/style/kamadatepicker.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/kamadatepicker@1.5.3/src/kamadatepicker.min.js"></script>
+
+  <style>
+    /* تنظیمات پایه */
+    :root {
+      --primary: #2563eb; --primary-hover: #1d4ed8;
+      --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+      --black-accent: #1e293b; --bg-color: #f8fafc; --card-bg: #ffffff;
+      --text-main: #1e293b; --text-muted: #64748b; --border-color: #e2e8f0;
+    }
+
+    body { 
+      font-family: 'Vazirmatn', Tahoma, sans-serif; 
+      background: var(--bg-color); margin: 0; 
+      padding: 15px 15px 90px 15px; 
+      direction: rtl; color: var(--text-main);
+    }
+    
+    .container { max-width: 500px; margin: 0 auto; }
+    h2, h3 { text-align: center; font-weight: 700; margin-bottom: 20px; }
+
+    .dashboard-header {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: white; padding: 20px; border-radius: 12px; text-align: center;
+      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+    }
+    .dashboard-header h2 { margin: 0; font-size: 1.15rem; color: white; line-height: 1.6; }
+    .dashboard-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
+
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    
+    input, select, textarea { 
+      width: 100%; padding: 12px; border: 1.5px solid var(--border-color); 
+      border-radius: 10px; box-sizing: border-box; font-family: inherit; 
+      font-size: 16px; background: var(--card-bg); transition: all 0.2s ease; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    
+    .date-time-group { display: flex; gap: 10px; align-items: center; }
+    .date-time-group input[type="text"], .date-time-group input[type="time"] { flex: 1; text-align: center; direction: ltr; letter-spacing: 1px; }
+
+    .search-input {
+      background: #f1f5f9 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2364748b" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-radius right 12px center no-repeat;
+      padding-right: 35px; margin-bottom: 15px; border: 1px solid var(--border-color);
+    }
+
+    button { 
+      width: 100%; background: var(--primary); color: white; border: none; 
+      font-weight: 700; font-size: 1rem; padding: 14px; border-radius: 10px; 
+      cursor: pointer; margin-top: 10px; transition: background 0.2s ease;
+    }
+    button:active { transform: scale(0.98); }
+    
+    .btn-add-emp { background: var(--success); }
+    .btn-export { background: #059669; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-delete, .btn-edit, .btn-close { width: auto; padding: 6px 12px; font-size: 0.8rem; margin-top: 0; border-radius: 8px; }
+    .btn-delete { background: #fee2e2; color: var(--danger); }
+    .btn-delete:hover { background: var(--danger); color: white; }
+    .btn-edit { background: #fef3c7; color: var(--warning); margin-left: 5px; }
+    .btn-edit:hover { background: var(--warning); color: white; }
+    .btn-logout { background: var(--border-color); color: var(--text-muted); margin-top: 30px; }
+    
+    .hidden { display: none !important; }
+    .status { margin-top: 12px; font-size: 0.9rem; text-align: center; font-weight: 600; }
+    
+    .card, .emp-item, .leave-summary-card { 
+      background: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; 
+      border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .emp-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; }
+    .emp-actions { display: flex; gap: 4px; }
+    .card-actions { display: flex; justify-content: flex-end; margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 12px; }
+    
+    .leave-summary-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; background: #dcfce7; color: #166534; text-align: center; }
+    .badge small { display: block; font-size: 0.75rem; font-weight: normal; margin-top: 2px; }
+    
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 0.85rem; }
+    .detail-item { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.6; }
+    .detail-item small { display: block; color: var(--text-muted); font-size: 0.75rem; }
+    .detail-item.danger { background: #fef2f2; border-color: #fecaca; }
+    .detail-item.warning { background: #fffbeb; border-color: #fde68a; }
+    .detail-item.info { background: #eff6ff; border-color: #bfdbfe; }
+
+    .boxes-container { display: flex; gap: 5px; direction: rtl; }
+    .status-box { width: 24px; height: 24px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 13px; color: white; font-weight: bold; }
+    .status-box.empty { background: #f1f5f9; border: 1px dashed #cbd5e1; color: transparent; }
+    .box-blue { background: var(--primary); }
+    .box-green { background: var(--success); }
+    .box-orange { background: var(--warning); }
+    .box-black { background: var(--black-accent); }
+    .box-red { background: var(--danger); }
+    .status-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; font-size: 0.75rem; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+    .bd-main { z-index: 9999 !important; direction: rtl; }
+
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 20px; }
+    .modal-content { background: var(--card-bg); padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; 
+      border-top: 1px solid rgba(0,0,0,0.05); 
+      display: flex; justify-content: space-around; padding: 10px 0; 
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.03); z-index: 1000;
+    }
+    .tab-item { flex: 1; text-align: center; background: none; border: none; color: var(--text-muted); font-size: 0.6rem; font-weight: 600; padding: 5px 0; cursor: pointer; }
+    .tab-item.active { color: var(--primary); }
+    .tab-item span { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+    
+    #loginSection { margin-top: 30%; background: var(--card-bg); padding: 30px 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div id="loginSection">
+    <h2>🔐 ورود مدیر سیستم</h2>
+    <form id="loginForm">
+      <div class="form-group"><label>ایمیل مدیر:</label><input type="email" id="loginEmail" required placeholder="example@mail.com" autocomplete="email"></div>
+      <div class="form-group"><label>رمز عبور:</label><input type="password" id="loginPassword" required placeholder="******"></div>
+      
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+        <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--primary);">
+        <label for="rememberMe" style="margin: 0; font-size: 0.85rem; font-weight: normal; cursor: pointer; color: var(--text-muted);">مرا به خاطر بسپار</label>
+      </div>
+
+      <button type="submit">ورود به پنل</button>
+    </form>
+    <div id="loginStatus" class="status"></div>
+  </div>
+
+  <div id="appSection" class="hidden">
+
+    <div id="tabDashboard" class="tab-content">
+      <div class="dashboard-header">
+        <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
+        <p>واحد کرمان (مزرعه ۳)</p>
+      </div>
+      <h3 style="text-align: right; font-size: 1rem; margin-top: 20px;">خلاصه وضعیت سیستم</h3>
+      <div class="detail-grid" id="dashboardStats"><div style="text-align: center; padding: 20px; color: var(--text-muted); grid-column: span 2;">در حال بارگذاری...</div></div>
+      <h3 style="text-align: right; font-size: 1rem; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">پرسنل در مرخصی (هم‌اکنون)</h3>
+      <div id="dashboardTodayLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
+    </div>
+
+    <div id="tabMonthlyStatus" class="tab-content hidden">
+      <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
+      <div class="status-legend">
+        <div class="legend-item"><div class="legend-color box-blue"></div>روزانه</div>
+        <div class="legend-item"><div class="legend-color box-green"></div>ساعتی</div>
+        <div class="legend-item"><div class="legend-color box-black"></div>تعطیل رسمی</div>
+        <div class="legend-item"><div class="legend-color box-orange"></div>استعلاجی</div>
+        <div class="legend-item"><div class="legend-color box-red"></div>غیبت</div>
+      </div>
+      <div id="monthlyStatusList">در حال دریافت...</div>
+    </div>
+    
+    <div id="tabLeave" class="tab-content hidden">
+      <div class="card" style="box-shadow: none; border:none; background: transparent;">
+        <h2>📝 ثبت مرخصی جدید</h2>
+        <form id="leaveForm">
+          <div class="form-group">
+            <label>👤 انتخاب فرد:</label>
+            <input type="text" class="search-input" placeholder="جستجوی نام نیرو..." oninput="filterLeaveSelect(this.value)" style="margin-bottom: 8px;">
+            <select id="employeeSelect" required>
+              <option value="">در حال دریافت...</option>
+            </select>
+          </div>
+          <div class="form-group"><label>📌 نوع مرخصی:</label>
+            <select id="recordType">
+              <option value="daily">مرخصی روزانه</option><option value="hourly">مرخصی ساعتی</option>
+              <option value="sick">استعلاجی</option><option value="official_holiday">تعطیل رسمی</option>
+              <option value="absence">غیبت</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>⏳ تاریخ و ساعت شروع:</label>
+            <div class="date-time-group">
+              <input type="text" id="startDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+              <input type="time" id="startTimeManual" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>⌛️ تاریخ و ساعت پایان:</label>
+            <div class="date-time-group">
+              <input type="text" id="endDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+              <input type="time" id="endTimeManual" required>
+            </div>
+          </div>
+          
+          <div class="form-group"><label>💬 توضیحات (علت):</label><textarea id="note" rows="2" placeholder="توضیحات اختیاری..."></textarea></div>
+          <button type="submit">ثبت نهایی مرخصی</button>
+        </form>
+        <div id="leaveStatus" class="status"></div>
+      </div>
+    </div>
+
+    <div id="tabRemaining" class="tab-content hidden">
+      <h2>📊 گزارش باقی‌مانده</h2>
+      <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
+      
+      <button class="btn-export" onclick="exportRemainingCSV()">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.768C6.35 8.68 7.5 9.5 8 9.5c.5 0 1.65-.82 2.884-2.052a.5.5 0 1 0-.768-.768C9.06 7.74 8.16 8.5 8 8.5c-.16 0-1.06-.76-2.116-1.82z"/><path d="M8 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 0z"/><path d="M1.5 11.5A.5.5 0 0 1 2 11h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-2z"/></svg>
+        دانلود گزارش در فایل اکسل
+      </button>
+
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('remainingList', this.value)">
+      <div id="remainingList">در حال دریافت...</div>
+    </div>
+
+    <div id="tabEmployees" class="tab-content hidden">
+      <h2>👥 مدیریت پرسنل</h2>
+      <div class="card">
+        <form id="addEmployeeForm">
+          <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="empPersonnelCode" placeholder="مثال: 101" inputmode="numeric"></div>
+          <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="empFullName" required placeholder="مثال: رضا احمدی"></div>
+          <div class="form-group"><label>سمت سازمانی / شغل:</label><input type="text" id="empPosition" placeholder="مثال: انباردار"></div>
+          <button type="submit" class="btn-add-emp">ذخیره نیرو در سیستم</button>
+        </form>
+        <div id="empStatus" class="status"></div>
+      </div>
+      <h3 style="margin-top: 30px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('employeesManageList', this.value)">
+      <div id="employeesManageList">در حال دریافت...</div>
+    </div>
+
+    <div id="tabRecords" class="tab-content hidden">
+      <h2>📋 سوابق ثبت‌شده</h2>
+      <input type="text" class="search-input" placeholder="جستجوی نام در سوابق..." oninput="filterDOM('recordsList', this.value)">
+      <div id="recordsList">در حال دریافت...</div>
+      <button id="logoutBtn" class="btn-logout">خروج از حساب کاربری</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- مودال‌های ویرایش -->
+<div id="editEmployeeModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header"><h3 style="margin:0;">✏️ ویرایش پرسنل</h3><button class="btn-close" onclick="closeEditEmployeeModal()">بستن ✕</button></div>
+    <form id="editEmployeeForm">
+      <input type="hidden" id="editEmpId">
+      <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="editEmpPersonnelCode" inputmode="numeric"></div>
+      <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="editEmpFullName" required></div>
+      <div class="form-group"><label>سمت سازمانی / شغل:</label><input type="text" id="editEmpPosition"></div>
+      <button type="submit">بروزرسانی مشخصات</button>
+    </form>
+    <div id="editEmpStatus" class="status"></div>
+  </div>
+</div>
+
+<div id="editRecordModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header"><h3 style="margin:0;">✏️ ویرایش رکورد</h3><button class="btn-close" onclick="closeEditRecordModal()">بستن ✕</button></div>
+    <form id="editRecordForm">
+      <input type="hidden" id="editRecordId">
+      <div class="form-group"><label>نوع رکورد:</label><select id="editRecordType" required><option value="daily">مرخصی روزانه</option><option value="hourly">مرخصی ساعتی</option><option value="sick">استعلاجی</option><option value="official_holiday">تعطیل رسمی</option><option value="absence">غیبت</option></select></div>
+      
+      <div class="form-group">
+        <label>شروع:</label>
+        <div class="date-time-group">
+          <input type="text" id="editStartDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+          <input type="time" id="editStartTimeManual" required>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>پایان:</label>
+        <div class="date-time-group">
+          <input type="text" id="editEndDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+          <input type="time" id="editEndTimeManual" required>
+        </div>
+      </div>
+      
+      <div class="form-group"><label>توضیحات (علت):</label><textarea id="editNote" rows="2"></textarea></div>
+      <button type="submit">بروزرسانی رکورد</button>
+    </form>
+    <div id="editRecordStatus" class="status"></div>
+  </div>
+</div>
+
+<div id="tabBar" class="tab-bar hidden">
+  <button class="tab-item active" onclick="switchTab('tabDashboard', this)"><span>🏠</span>داشبورد</button>
+  <button class="tab-item" onclick="switchTab('tabMonthlyStatus', this)"><span>📅</span>وضعیت</button>
+  <button class="tab-item" onclick="switchTab('tabLeave', this)"><span>📝</span>ثبت</button>
+  <button class="tab-item" onclick="switchTab('tabRemaining', this)"><span>📊</span>گزارش</button>
+  <button class="tab-item" onclick="switchTab('tabEmployees', this)"><span>👥</span>پرسنل</button>
+  <button class="tab-item" onclick="switchTab('tabRecords', this)"><span>📋</span>سوابق</button>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://zzjmzgqjkddnnarricbb.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('rememberMe') === 'true') {
+      document.getElementById('loginEmail').value = localStorage.getItem('savedEmail') || '';
+      document.getElementById('loginPassword').value = localStorage.getItem('savedPassword') || '';
+      document.getElementById('rememberMe').checked = true;
+    }
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
+
+    if (rememberMe) {
+      localStorage.setItem('rememberMe', 'true');
+      localStorage.setItem('savedEmail', email);
+      localStorage.setItem('savedPassword', password);
+    } else {
+      localStorage.removeItem('rememberMe');
+      localStorage.removeItem('savedEmail');
+      localStorage.removeItem('savedPassword');
+    }
+
+    const status = document.getElementById('loginStatus'); 
+    status.innerText = "در حال ورود به سیستم...";
+    
+    try {
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) { 
+        status.style.color = "var(--danger)"; 
+        status.innerText = "خطا: " + error.message; 
+      } else {
+        init();
+      }
+    } catch(err) {
+      status.style.color = "var(--danger)"; 
+      status.innerText = "خطای ارتباط با سرور. وضعیت اینترنت را چک کنید.";
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => { 
+    await client.auth.signOut(); 
+    init(); 
+  });
+
+  try {
+    const datePickerOptions = {
+      placeholder: "مثال: 1403/01/15",
+      twodigit: true,
+      closeAfterSelect: true,
+      nextButtonIcon: "fa fa-arrow-right",
+      previousButtonIcon: "fa fa-arrow-left",
+      buttonsColor: "blue",
+      forceFarsiDigits: true,
+      markToday: true,
+      markHolidays: true,
+      highlightSelectedDay: true,
+      sync: true
+    };
+    kamaDatepicker('startDateManual', datePickerOptions);
+    kamaDatepicker('endDateManual', datePickerOptions);
+    kamaDatepicker('editStartDateManual', datePickerOptions);
+    kamaDatepicker('editEndDateManual', datePickerOptions);
+  } catch (err) {
+    console.warn('تقویم شمسی لود نشد، فیلدها به صورت دستی قابل تایپ هستند.', err);
+  }
+
+  const WORK_DAY_MINUTES = 7 * 60 + 20; 
+  const TOTAL_ANNUAL_DAYS = 26;
+  const TOTAL_ANNUAL_MINUTES = TOTAL_ANNUAL_DAYS * WORK_DAY_MINUTES;
+
+  let allEmployeesData = [];
+
+  const TYPE_LABELS = {
+    'daily': 'مرخصی روزانه', 'hourly': 'مرخصی ساعتی', 'sick': 'استعلاجی', 'official_holiday': 'تعطیل رسمی', 'absence': 'غیبت',
+    'مرخصی روزانه': 'daily', 'مرخصی ساعتی': 'hourly', 'استعلاجی': 'sick', 'تعطیل رسمی': 'official_holiday', 'غیبت': 'absence'
+  };
+
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById(tabId).classList.remove('hidden');
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.search-input').forEach(input => { input.value = ''; });
+    if(tabId === 'tabLeave') filterLeaveSelect('');
+
+    if(tabId === 'tabRecords') loadRecords();
+    else if(tabId === 'tabRemaining') loadRemainingLeave();
+    else if(tabId === 'tabDashboard') loadDashboard();
+    else if(tabId === 'tabMonthlyStatus') loadMonthlyStatus();
+  }
+
+  function filterDOM(containerId, query) {
+    const filter = query.toLowerCase();
+    const container = document.getElementById(containerId);
+    const items = container.querySelectorAll('.leave-summary-card, .emp-item, .card');
+    items.forEach(item => {
+      if (item.innerText.toLowerCase().includes(filter)) { item.style.display = ""; } 
+      else { item.style.display = "none"; }
+    });
+  }
+
+  function filterLeaveSelect(query) {
+    const select = document.getElementById('employeeSelect');
+    const q = query.toLowerCase();
+    const filtered = allEmployeesData.filter(e => e.full_name.toLowerCase().includes(q) || (e.personnel_code && e.personnel_code.includes(q)));
+    if (filtered.length > 0) {
+      select.innerHTML = `<option value="">انتخاب کنید...</option>` + filtered.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
+    } else {
+      select.innerHTML = `<option value="">نتیجه‌ای یافت نشد</option>`;
+    }
+  }
+
+  async function exportRemainingCSV() {
+    alert('در حال آماده‌سازی فایل اکسل، لطفاً چند ثانیه صبر کنید...');
+    const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    const { data: records } = await client.from('leave_records').select('*');
+    if (!employees || employees.length === 0) return;
+
+    let csvContent = '\uFEFF';
+    csvContent += "کد پرسنلی,نام و نام خانوادگی,سمت,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,مانده مرخصی (روز),مانده مرخصی (ساعت)\n";
+
+    employees.forEach(emp => {
+      const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+      let dM=0, hM=0, sM=0, holM=0, aM=0;
+      empRecords.forEach(rec => {
+        const diffMinutes = Math.max(0, Math.floor((new Date(rec.end_at) - new Date(rec.start_at)) / 60000));
+        switch(rec.record_type) {
+          case 'daily': case 'مرخصی روزانه': dM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'hourly': case 'مرخصی ساعتی': hM += diffMinutes; break;
+          case 'sick': case 'استعلاجی': sM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'official_holiday': case 'تعطیل رسمی': holM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'absence': case 'غیبت': aM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+        }
+      });
+      const usedMinutes = dM + hM;
+      const remMinutes = Math.max(0, TOTAL_ANNUAL_MINUTES - usedMinutes);
+      const remFormatted = formatWorkDaysAndHours(remMinutes);
+      csvContent += `${emp.personnel_code || '---'},${emp.full_name},${emp.position || '---'},${formatHoursAndMinutes(dM)},${formatHoursAndMinutes(hM)},${formatHoursAndMinutes(sM)},${formatHoursAndMinutes(holM)},${formatHoursAndMinutes(aM)},${remFormatted.daysText},${remFormatted.totalHoursText}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a"); const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url); link.setAttribute("download", "گزارش_مرخصی_سیمرغ.csv");
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  }
+
+  async function init() {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('appSection').classList.remove('hidden');
+      document.getElementById('tabBar').classList.remove('hidden');
+      await loadEmployeesList(); loadDashboard();
+    } else {
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('appSection').classList.add('hidden');
+      document.getElementById('tabBar').classList.add('hidden');
+    }
+  }
+
+  function gregorianToShamsi(gy, gm, gd) {
+    var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    var jy = (gy <= 1600) ? 0 : 979; gy -= (gy <= 1600) ? 621 : 1600; var gy2 = (gm > 2) ? (gy + 1) : gy;
+    var days = (365 * gy) + (parseInt((gy2 + 3) / 4)) - (parseInt((gy2 + 99) / 100)) + (parseInt((gy2 + 399) / 400)) - 80 + gd + g_d_m[gm - 1];
+    jy += 33 * (parseInt(days / 12053)); days %= 12053; jy += 4 * (parseInt(days / 1461)); days %= 1461;
+    if (days > 365) { jy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
+    var jm = (days < 186) ? 1 + parseInt(days / 31) : 7 + parseInt((days - 186) / 30);
+    var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+    return { year: jy, month: String(jm).padStart(2, '0'), day: String(jd).padStart(2, '0') };
+  }
+
+  function shamsiToGregorian(jy, jm, jd) {
+    jy = parseInt(jy); jm = parseInt(jm); jd = parseInt(jd);
+    var sal_a = [0, 31, ((jy % 4 === 0 && jy % 100 !== 0) || (jy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    var gy = (jy <= 979) ? 621 : 1600; jy -= (jy <= 979) ? 0 : 979;
+    var days = (365 * jy) + (parseInt(jy / 33) * 8) + parseInt(((jy % 33) + 3) / 4) + 78 + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+    gy += 400 * parseInt(days / 146097); days %= 146097; if (days > 36524) { gy += 100 * parseInt(--days / 36524); days %= 36524; if (days >= 365) days++; }
+    gy += 4 * parseInt(days / 1461); days %= 1461; if (days > 365) { gy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
+    var gd = days + 1; var gm; for (gm = 0; gm < 13; gm++) { var v = sal_a[gm]; if (gd <= v) break; gd -= v; }
+    return { gy: gy, gm: gm, gd: gd };
+  }
+
+  function toEnglishDigits(str) { return String(str).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
+
+  function parseManualInputToDate(dateId, timeId) {
+    const rawDate = document.getElementById(dateId).value; const rawTime = document.getElementById(timeId).value;
+    if (!rawDate || !rawTime) return null;
+    const dateParts = toEnglishDigits(rawDate).trim().replace(/-/g, '/').split('/').map(Number);
+    const timeParts = toEnglishDigits(rawTime).trim().split(':').map(Number);
+    if (dateParts.length !== 3 || timeParts.length !== 2) return null;
+    const [year, month, day] = dateParts; const [hour, minute] = timeParts;
+    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) return null;
+    const gDate = shamsiToGregorian(year, month, day);
+    return new Date(gDate.gy, gDate.gm - 1, gDate.gd, hour, minute, 0);
+  }
+
+  async function loadDashboard() {
+    const containerStats = document.getElementById('dashboardStats');
+    const containerToday = document.getElementById('dashboardTodayLeave');
+    const { data: employees } = await client.from('employees').select('id, full_name, position');
+    const { data: records } = await client.from('leave_records').select('*, employees(full_name, position)');
+    
+    const now = new Date(); let onLeaveHtml = ''; let activeRecords = [];
+
+    if (records) {
+      activeRecords = records.filter(r => { return now >= new Date(r.start_at) && now <= new Date(r.end_at); });
+      if (activeRecords.length > 0) {
+        onLeaveHtml = activeRecords.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fee2e2; color:var(--danger); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
+      } else onLeaveHtml = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
+    }
+    containerStats.innerHTML = `<div class="detail-item info" style="text-align:center;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--primary);">${employees ? employees.length : 0}</span><strong>کل پرسنل</strong></div><div class="detail-item warning" style="text-align:center;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--warning);">${records ? records.length : 0}</span><strong>کل سوابق</strong></div><div class="detail-item danger" style="text-align:center; grid-column: span 2;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--danger);">${activeRecords.length}</span><strong>در مرخصی لحظه‌ای</strong></div>`;
+    containerToday.innerHTML = onLeaveHtml;
+  }
+
+  async function loadMonthlyStatus() {
+    const container = document.getElementById('monthlyStatusList');
+    container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
+    const { data: employees } = await client.from('employees').select('id, full_name, position');
+    const { data: records } = await client.from('leave_records').select('*');
+
+    if (!employees || employees.length === 0) { container.innerHTML = "<p style='text-align:center;'>پرسنلی ثبت نشده.</p>"; return; }
+
+    const today = new Date();
+    const currentShamsi = gregorianToShamsi(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+    document.getElementById('currentMonthLabel').innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(currentShamsi.month) - 1]} ${currentShamsi.year}</span>`;
+
+    let html = '';
+    employees.forEach(emp => {
+      const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+      const currentMonthRecords = empRecords.filter(rec => {
+        const recDate = new Date(rec.start_at);
+        const recShamsi = gregorianToShamsi(recDate.getFullYear(), recDate.getMonth() + 1, recDate.getDate());
+        return recShamsi.year == currentShamsi.year && recShamsi.month == currentShamsi.month;
+      }).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+
+      let boxesHtml = '';
+      for (let i = 0; i < 6; i++) {
+        if (i < currentMonthRecords.length) {
+          let colorClass = '';
+          switch(currentMonthRecords[i].record_type) {
+            case 'daily': case 'مرخصی روزانه': colorClass = 'box-blue'; break;
+            case 'hourly': case 'مرخصی ساعتی': colorClass = 'box-green'; break;
+            case 'sick': case 'استعلاجی': colorClass = 'box-orange'; break;
+            case 'official_holiday': case 'تعطیل رسمی': colorClass = 'box-black'; break;
+            case 'absence': case 'غیبت': colorClass = 'box-red'; break;
+          }
+          boxesHtml += `<div class="status-box ${colorClass}">✔</div>`;
+        } else boxesHtml += `<div class="status-box empty"></div>`;
+      }
+      html += `<div class="emp-item"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${emp.position || 'بدون سمت'}</div></div><div class="boxes-container">${boxesHtml}</div></div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  // --- مدیریت خطاهای ثبت کارمند ---
+  document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const statusDiv = document.getElementById('empStatus');
+    statusDiv.innerText = "در حال ثبت...";
+    statusDiv.style.color = "var(--text-muted)";
+
+    let pCode = document.getElementById('empPersonnelCode').value.trim();
+    if (pCode === "") pCode = null; // حل مشکل ارور فیلد خالی تکراری
+
+    const { error } = await client.from('employees').insert([{ 
+      personnel_code: pCode, 
+      full_name: document.getElementById('empFullName').value, 
+      position: document.getElementById('empPosition').value 
+    }]);
+    
+    if (!error) { 
+      document.getElementById('addEmployeeForm').reset(); 
+      statusDiv.innerText = "نیرو با موفقیت اضافه شد!";
+      statusDiv.style.color = "var(--success)";
+      loadEmployeesList(); 
+      setTimeout(() => { statusDiv.innerText = ""; }, 3000);
+    } else {
+      statusDiv.innerText = "خطا در ثبت: " + error.message;
+      statusDiv.style.color = "var(--danger)";
+      if(error.message.includes('duplicate')) {
+         statusDiv.innerText = "خطا: این شماره پرسنلی قبلاً برای شخص دیگری ثبت شده است.";
+      }
+    }
+  });
+
+  async function loadEmployeesList() {
+    const { data } = await client.from('employees').select('*').order('created_at', { ascending: false });
+    const select = document.getElementById('employeeSelect'); const manageList = document.getElementById('employeesManageList');
+    if (data && data.length > 0) {
+      allEmployeesData = data;
+      select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
+      manageList.innerHTML = data.map(e => `<div class="emp-item"><span><strong>${e.full_name}</strong> <small style="color:var(--text-muted)">(${e.position || ''})</small></span><div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div></div>`).join('');
+    } else {
+      allEmployeesData = []; select.innerHTML = `<option value="">بدون پرسنل</option>`; manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
+    }
+  }
+
+  function openEditEmployeeModal(id, code, name, pos) {
+    document.getElementById('editEmpId').value = id; document.getElementById('editEmpPersonnelCode').value = code==='null'?'':code; document.getElementById('editEmpFullName').value = name; document.getElementById('editEmpPosition').value = pos==='null'?'':pos;
+    document.getElementById('editEmployeeModal').classList.remove('hidden');
+  }
+  function closeEditEmployeeModal() { document.getElementById('editEmployeeModal').classList.add('hidden'); }
+
+  // --- مدیریت خطاهای ویرایش کارمند ---
+  document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const statusDiv = document.getElementById('editEmpStatus');
+    statusDiv.innerText = "در حال بروزرسانی...";
+    statusDiv.style.color = "var(--text-muted)";
+
+    let pCode = document.getElementById('editEmpPersonnelCode').value.trim();
+    if (pCode === "") pCode = null;
+
+    const { error } = await client.from('employees').update({ 
+      personnel_code: pCode, 
+      full_name: document.getElementById('editEmpFullName').value, 
+      position: document.getElementById('editEmpPosition').value 
+    }).eq('id', document.getElementById('editEmpId').value);
+    
+    if (!error) {
+      closeEditEmployeeModal(); 
+      loadEmployeesList();
+      statusDiv.innerText = "";
+    } else {
+      statusDiv.innerText = "خطا: " + error.message;
+      statusDiv.style.color = "var(--danger)";
+      if(error.message.includes('duplicate')) {
+         statusDiv.innerText = "خطا: این شماره پرسنلی قبلاً ثبت شده است.";
+      }
+    }
+  });
+
+  async function deleteEmployee(id, name) {
+    if (confirm(`حذف ${name} و سوابقش؟`)) { await client.from('leave_records').delete().eq('employee_id', id); await client.from('employees').delete().eq('id', id); loadEmployeesList(); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); }
+  }
+
+  document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('leaveStatus');
+    const { data: { user } } = await client.auth.getUser();
+    const startObj = parseManualInputToDate('startDateManual', 'startTimeManual');
+    const endObj = parseManualInputToDate('endDateManual', 'endTimeManual');
+    
+    if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است."; return; }
+    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "پایان باید بعد از شروع باشد."; return; }
+
+    const { error } = await client.from('leave_records').insert([{ employee_id: document.getElementById('employeeSelect').value, record_type: document.getElementById('recordType').value, start_at: startObj.toISOString(), end_at: endObj.toISOString(), note: document.getElementById('note').value, created_by: user.id }]);
+    if (!error) { status.style.color = "var(--success)"; status.innerText = "ثبت شد!"; document.getElementById('note').value = ''; loadDashboard(); loadMonthlyStatus(); }
+  });
+
+  function formatHoursAndMinutes(totalMinutes) {
+    if (!totalMinutes || totalMinutes <= 0) return '۰ ساعت و ۰ دقیقه';
+    const hours = Math.floor(totalMinutes / 60); const mins = Math.floor(totalMinutes % 60);
+    let parts = []; if (hours > 0) parts.push(`${hours} ساعت`); if (mins > 0) parts.push(`${mins} دقیقه`);
+    return parts.length > 0 ? parts.join(' و ') : '۰ دقیقه';
+  }
+
+  function formatWorkDaysAndHours(totalMinutes) {
+    if (!totalMinutes || totalMinutes <= 0) return { daysText: '۰ روز کاری', totalHoursText: '۰ ساعت و ۰ دقیقه' };
+    const days = Math.floor(totalMinutes / WORK_DAY_MINUTES); const remMinutesAfterDays = totalMinutes % WORK_DAY_MINUTES;
+    const remHours = Math.floor(remMinutesAfterDays / 60); const remMins = Math.floor(remMinutesAfterDays % 60);
+    let dayParts = []; if (days > 0) dayParts.push(`${days} روز`); if (remHours > 0) dayParts.push(`${remHours} ساعت`); if (remMins > 0) dayParts.push(`${remMins} دقیقه`);
+    return { daysText: dayParts.length > 0 ? dayParts.join(' و ') : '۰ روز', totalHoursText: formatHoursAndMinutes(totalMinutes) };
+  }
+
+  async function loadRemainingLeave() {
+    const container = document.getElementById('remainingList');
+    const { data: employees } = await client.from('employees').select('*'); const { data: records } = await client.from('leave_records').select('*');
+    if (!employees || employees.length === 0) return;
+
+    container.innerHTML = employees.map(emp => {
+      let dM=0, hM=0, sM=0, holM=0, aM=0;
+      (records || []).filter(r=>r.employee_id===emp.id).forEach(rec => {
+        const diff = Math.max(0, Math.floor((new Date(rec.end_at)-new Date(rec.start_at))/60000));
+        const days = Math.max(1, Math.ceil(diff/1440));
+        switch(rec.record_type) {
+          case 'daily': case 'مرخصی روزانه': dM += days*WORK_DAY_MINUTES; break;
+          case 'hourly': case 'مرخصی ساعتی': hM += diff; break;
+          case 'sick': case 'استعلاجی': sM += days*WORK_DAY_MINUTES; break;
+          case 'official_holiday': case 'تعطیل رسمی': holM += days*WORK_DAY_MINUTES; break;
+          case 'absence': case 'غیبت': aM += days*WORK_DAY_MINUTES; break;
+        }
+      });
+      const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
+      return `<div class="leave-summary-card"><div class="leave-summary-header"><strong>${emp.full_name}</strong><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
+      <div class="detail-grid"><div class="detail-item"><strong>روزانه:</strong><br>${formatWorkDaysAndHours(dM).daysText}</div><div class="detail-item"><strong>ساعتی:</strong><br>${formatHoursAndMinutes(hM)}</div><div class="detail-item warning"><strong>استعلاجی:</strong><br>${formatWorkDaysAndHours(sM).daysText}</div><div class="detail-item danger"><strong>غیبت:</strong><br>${formatWorkDaysAndHours(aM).daysText}</div></div></div>`;
+    }).join('');
+  }
+
+  async function loadRecords() {
+    const list = document.getElementById('recordsList');
+    const { data } = await client.from('leave_records').select('*, employees(full_name)').order('created_at', { ascending: false });
+    if(data) {
+      list.innerHTML = data.map(r => `<div class="card"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${r.note || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`).join('');
+    }
+  }
+
+  async function deleteRecord(id) { if(confirm("حذف رکورد؟")) { await client.from('leave_records').delete().eq('id', id); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); } }
+
+  init();
+</script>
+</body>
+</html>
