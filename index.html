@@ -166,7 +166,7 @@
   <div id="loginSection">
     <h2>🔐 ورود سیستم</h2>
     <form id="loginForm">
-      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="مثال: امین سعید" autocomplete="username"></div>
+      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="نام کاربری" autocomplete="username"></div>
       <div class="form-group"><label>کلمه عبور:</label><input type="password" id="loginPassword" required placeholder="کلمه عبور"></div>
       
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
@@ -509,10 +509,10 @@
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const inputVal = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    // تبدیل خودکار اعداد فارسی رمز عبور به انگلیسی (برای اینکه به فارسی/انگلیسی بودن اعداد حساس نباشد)
+    const password = toEnglishDigits(document.getElementById('loginPassword').value);
     const rememberMe = document.getElementById('rememberMe').checked;
 
-    // نقشه دقیق نام‌های فارسی سه نفر به ایمیل‌های ثبت‌شده در Supabase
     const userMapping = {
       'امین سعید': 'amin.saeed@simorgh.local',
       'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
