@@ -113,17 +113,17 @@
     .legend-item { display: flex; align-items: center; gap: 5px; }
     .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
-    .category-filters { 
-      display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;
+    .category-filters, .month-filters { 
+      display: flex; gap: 6px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;
       -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
-    .category-filters::-webkit-scrollbar { display: none; }
-    .filter-btn { 
-      white-space: nowrap; padding: 8px 14px; background: #e2e8f0; color: var(--text-muted); 
-      border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: none; cursor: pointer; transition: 0.2s;
+    .category-filters::-webkit-scrollbar, .month-filters::-webkit-scrollbar { display: none; }
+    .filter-btn, .month-btn { 
+      white-space: nowrap; padding: 6px 12px; background: #e2e8f0; color: var(--text-muted); 
+      border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: none; cursor: pointer; transition: 0.2s;
       margin-top: 0; width: auto; flex-shrink: 0;
     }
-    .filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
+    .filter-btn.active, .month-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
 
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 20px; }
     .modal-content { background: var(--card-bg); padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
@@ -305,9 +305,27 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق -->
+    <!-- تب سوابق با باکس ماه‌های سال -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
+      
+      <!-- باکس انتخاب ماه (از فروردین تا اسفند) -->
+      <div class="month-filters" id="monthFiltersContainer">
+        <button type="button" class="month-btn active" onclick="filterByMonth('all', this)">همه ماه‌ها</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('01', this)">فروردین</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('02', this)">اردیبهشت</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('03', this)">خرداد</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('04', this)">تیر</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('05', this)">مرداد</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('06', this)">شهریور</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('07', this)">مهر</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('08', this)">آبان</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('09', this)">آذر</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('10', this)">دی</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('11', this)">بهمن</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('12', this)">اسفند</button>
+      </div>
+
       <input type="text" class="search-input" placeholder="جستجوی نام یا تاریخ (مثال: 1403/05/12)..." oninput="filterRecords(this.value)">
       <div id="recordsList">در حال دریافت...</div>
       <button id="logoutBtn" class="btn-logout">خروج از حساب کاربری</button>
@@ -378,7 +396,7 @@
         <small style="color:var(--text-muted); display:block; margin-top:4px;">در صورت خالی بودن، تاریخ شروع در نظر گرفته می‌شود.</small>
       </div>
       
-      <div class="form-group"><label>توضیحات (علت):</label><textarea id="editNote" rows="2"></textarea></div>
+      <div class="form-group"><label>💬 توضیحات (علت):</label><textarea id="editNote" rows="2"></textarea></div>
       <button type="submit">ذخیره تغییرات</button>
     </form>
     <div id="editRecordStatus" class="status"></div>
@@ -399,9 +417,6 @@
   const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // -----------------------------------------------------------------
-  // تابع هوشمندسازی جستجوی فارسی
-  // -----------------------------------------------------------------
   function normalizeText(str) {
     if (!str) return '';
     return String(str)
@@ -413,15 +428,12 @@
       .trim();
   }
 
-  // -----------------------------------------------------------------
-  // سیستم تایپ هوشمند تاریخ (تولید خودکار اسلش)
-  // -----------------------------------------------------------------
   const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
       el.addEventListener('input', function(e) {
-        let v = toEnglishDigits(e.target.value).replace(/\D/g, ''); // حذف هر چیزی جز عدد
+        let v = toEnglishDigits(e.target.value).replace(/\D/g, '');
         if (v.length > 4) v = v.substring(0, 4) + '/' + v.substring(4);
         if (v.length > 7) v = v.substring(0, 7) + '/' + v.substring(7);
         e.target.value = v;
@@ -470,6 +482,7 @@
   let allEmployeesData = [];
   window.currentJobFilter = 'all';
   window.currentSearchQuery = '';
+  window.currentMonthFilter = 'all'; // فیلتر ماه جاری برای سوابق
 
   const TYPE_LABELS = {
     'daily_leave': 'مرخصی روزانه', 'daily': 'مرخصی روزانه', 
@@ -488,6 +501,12 @@
     document.querySelectorAll('.search-input').forEach(input => { input.value = ''; });
     if(tabId === 'tabLeave') filterLeaveSelect('');
     if(tabId === 'tabEmployees') { window.currentSearchQuery = ''; applyEmployeeFilters(); }
+    if(tabId === 'tabRecords') {
+      window.currentMonthFilter = 'all';
+      document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.month-btn').classList.add('active');
+      loadRecords();
+    }
 
     if(tabId === 'tabRemaining') {
       loadRemainingLeave();
@@ -496,8 +515,6 @@
           hint.style.display = 'block';
           hint.innerText = '🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.';
       }
-    } else if(tabId === 'tabRecords') {
-      loadRecords();
     } else if(tabId === 'tabDashboard') {
       loadDashboard();
     } else if(tabId === 'tabMonthlyStatus') {
@@ -517,15 +534,34 @@
     });
   }
 
+  // فیلتر بر اساس ماه انتخاب شده در سوابق
+  function filterByMonth(monthCode, btn) {
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    window.currentMonthFilter = monthCode;
+    
+    const items = document.getElementById('recordsList').querySelectorAll('.card');
+    items.forEach(item => {
+      const itemMonth = item.getAttribute('data-month') || '';
+      const matchesMonth = (monthCode === 'all') || (itemMonth === monthCode);
+      item.style.display = matchesMonth ? "" : "none";
+    });
+  }
+
   function filterRecords(query) {
     const filter = normalizeText(toEnglishDigits(query));
     const terms = filter.split(' ').filter(t => t !== '');
+    const monthCode = window.currentMonthFilter;
     const items = document.getElementById('recordsList').querySelectorAll('.card');
     
     items.forEach(item => {
       const searchStr = normalizeText(item.getAttribute('data-search'));
-      const isMatch = terms.every(term => searchStr.includes(term));
-      item.style.display = isMatch ? "" : "none";
+      const itemMonth = item.getAttribute('data-month') || '';
+      
+      const matchesSearch = terms.every(term => searchStr.includes(term));
+      const matchesMonth = (monthCode === 'all') || (itemMonth === monthCode);
+      
+      item.style.display = (matchesSearch && matchesMonth) ? "" : "none";
     });
   }
 
@@ -925,7 +961,6 @@
       });
       const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
       
-      // اضافه شدن باکس تعطیل رسمی به صورت تمام عرض در پایین گرید
       return `<div class="leave-summary-card" data-name="${emp.full_name}" style="display:none;">
         <div class="leave-summary-header"><strong>${emp.full_name}</strong><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
         <div class="detail-grid">
@@ -954,8 +989,9 @@
         const dateStrNoZero = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`; 
         
         const searchData = `${r.employees?r.employees.full_name:''} ${dateStr} ${dateStrNoZero}`;
+        const recordMonth = String(sShamsi.month); // استخراج ماه رکورد (مثلا '01', '06' و...)
 
-        return `<div class="card" data-search="${searchData}"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`;
+        return `<div class="card" data-month="${recordMonth}" data-search="${searchData}"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`;
       }).join('');
     }
   }
