@@ -510,8 +510,11 @@
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
 
+    // نقشه کاربران سیستم برای تبدیل نام فارسی به ایمیل واقعی
     const userMapping = {
       'امین سعید': 'amin.saeed@simorgh.local',
+      'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
+      'مهرداد شادمان': 'mehrdad@simorgh.local'
     };
 
     let email = inputVal;
