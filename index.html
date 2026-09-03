@@ -146,7 +146,6 @@
 
 <div class="container">
   
-  <!-- صفحه ورود -->
   <div id="loginSection">
     <h2>🔐 ورود مدیر سیستم</h2>
     <form id="loginForm">
@@ -165,7 +164,6 @@
 
   <div id="appSection" class="hidden">
 
-    <!-- تب داشبورد -->
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
         <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
@@ -185,7 +183,6 @@
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
     </div>
 
-    <!-- تب وضعیت ماهانه -->
     <div id="tabMonthlyStatus" class="tab-content hidden">
       <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
       <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
@@ -199,7 +196,6 @@
       <div id="monthlyStatusList">در حال دریافت...</div>
     </div>
     
-    <!-- تب ثبت -->
     <div id="tabLeave" class="tab-content hidden">
       <div class="card" style="box-shadow: none; border:none; background: transparent;">
         <h2>📝 ثبت مرخصی جدید</h2>
@@ -213,11 +209,12 @@
           </div>
           <div class="form-group"><label>📌 نوع مرخصی:</label>
             <select id="recordType">
-              <option value="مرخصی روزانه">مرخصی روزانه</option>
-              <option value="مرخصی ساعتی">مرخصی ساعتی</option>
-              <option value="استعلاجی">استعلاجی</option>
-              <option value="تعطیل رسمی">تعطیل رسمی</option>
-              <option value="غیبت">غیبت</option>
+              <!-- مقادیر دقیق دیتابیس جایگذاری شد -->
+              <option value="daily_leave">مرخصی روزانه</option>
+              <option value="hourly_leave">مرخصی ساعتی</option>
+              <option value="sick_leave">استعلاجی</option>
+              <option value="official_holiday">تعطیل رسمی</option>
+              <option value="absence">غیبت</option>
             </select>
           </div>
           
@@ -245,7 +242,6 @@
       </div>
     </div>
 
-    <!-- تب گزارش -->
     <div id="tabRemaining" class="tab-content hidden">
       <h2>📊 گزارش باقی‌مانده</h2>
       <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
@@ -259,7 +255,6 @@
       <div id="remainingList">در حال دریافت...</div>
     </div>
 
-    <!-- تب پرسنل -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
       <div class="card">
@@ -287,7 +282,6 @@
 
       <h3 style="margin-top: 30px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
       
-      <!-- دکمه‌های فیلتر دسته‌بندی مشاغل -->
       <div class="category-filters">
         <button type="button" class="filter-btn active" onclick="filterByJob('all', this)">همه پرسنل</button>
         <button type="button" class="filter-btn" onclick="filterByJob('کارگر بسته بندی', this)">بسته بندی</button>
@@ -301,7 +295,6 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
       <input type="text" class="search-input" placeholder="جستجوی دقیق نام..." oninput="filterDOM('recordsList', this.value)">
@@ -347,11 +340,12 @@
       <div class="form-group">
         <label>نوع رکورد:</label>
         <select id="editRecordType" required>
-          <option value="مرخصی روزانه">مرخصی روزانه</option>
-          <option value="مرخصی ساعتی">مرخصی ساعتی</option>
-          <option value="استعلاجی">استعلاجی</option>
-          <option value="تعطیل رسمی">تعطیل رسمی</option>
-          <option value="غیبت">غیبت</option>
+          <!-- مقادیر دقیق دیتابیس جایگذاری شد -->
+          <option value="daily_leave">مرخصی روزانه</option>
+          <option value="hourly_leave">مرخصی ساعتی</option>
+          <option value="sick_leave">استعلاجی</option>
+          <option value="official_holiday">تعطیل رسمی</option>
+          <option value="absence">غیبت</option>
         </select>
       </div>
       
@@ -447,10 +441,13 @@
   window.currentJobFilter = 'all';
   window.currentSearchQuery = '';
 
-  // تصحیح مپینگ برای جلوگیری از نمایش کلمات انگلیسی در UI
+  // تصحیح لیبل‌ها برای هماهنگی با دیتابیس
   const TYPE_LABELS = {
-    'daily': 'مرخصی روزانه', 'hourly': 'مرخصی ساعتی', 'sick': 'استعلاجی', 'official_holiday': 'تعطیل رسمی', 'absence': 'غیبت',
-    'مرخصی روزانه': 'مرخصی روزانه', 'مرخصی ساعتی': 'مرخصی ساعتی', 'استعلاجی': 'استعلاجی', 'تعطیل رسمی': 'تعطیل رسمی', 'غیبت': 'غیبت'
+    'daily_leave': 'مرخصی روزانه', 'daily': 'مرخصی روزانه', 
+    'hourly_leave': 'مرخصی ساعتی', 
+    'sick_leave': 'استعلاجی', 
+    'official_holiday': 'تعطیل رسمی', 
+    'absence': 'غیبت'
   };
 
   function switchTab(tabId, btn) {
@@ -469,7 +466,6 @@
     else if(tabId === 'tabMonthlyStatus') loadMonthlyStatus();
   }
 
-  // سرچ هوشمند فقط بر اساس نام شخص
   function filterDOM(containerId, query) {
     const filter = query.toLowerCase();
     const items = document.getElementById(containerId).querySelectorAll('.leave-summary-card, .emp-item, .card');
@@ -479,7 +475,6 @@
     });
   }
 
-  // فیلترهای دسته‌بندی مشاغل
   function filterByJob(jobCategory, btn) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     if(btn) btn.classList.add('active');
@@ -531,11 +526,11 @@
       empRecords.forEach(rec => {
         const diffMinutes = Math.max(0, Math.floor((new Date(rec.end_at) - new Date(rec.start_at)) / 60000));
         switch(rec.record_type) {
-          case 'daily': case 'مرخصی روزانه': dM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-          case 'hourly': case 'مرخصی ساعتی': hM += diffMinutes; break;
-          case 'sick': case 'استعلاجی': sM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-          case 'official_holiday': case 'تعطیل رسمی': holM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-          case 'absence': case 'غیبت': aM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'daily_leave': case 'daily': dM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'hourly_leave': hM += diffMinutes; break;
+          case 'sick_leave': sM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'official_holiday': holM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'absence': aM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
         }
       });
       const usedMinutes = dM + hM;
@@ -600,7 +595,6 @@
     return new Date(gDate.gy, gDate.gm - 1, gDate.gd, hour, minute, 0);
   }
 
-  // --- سیستم داشبورد و جداسازی امروز و فردا ---
   async function loadDashboard() {
     const containerStats = document.getElementById('dashboardStats');
     const containerToday = document.getElementById('dashboardTodayLeave');
@@ -620,12 +614,10 @@
       const activeToday = records.filter(r => new Date(r.start_at) <= endOfToday && new Date(r.end_at) >= startOfToday);
       const activeTomorrow = records.filter(r => new Date(r.start_at) <= endOfTomorrow && new Date(r.end_at) >= startOfTomorrow);
       
-      // نمایش امروز
       if (activeToday.length > 0) {
         containerToday.innerHTML = activeToday.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fee2e2; color:var(--danger); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
       } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
       
-      // نمایش فردا
       if (activeTomorrow.length > 0) {
         containerTomorrow.innerHTML = activeTomorrow.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fffbeb; color:var(--warning); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
       } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
@@ -660,11 +652,11 @@
         if (i < currentMonthRecords.length) {
           let colorClass = '';
           switch(currentMonthRecords[i].record_type) {
-            case 'daily': case 'مرخصی روزانه': colorClass = 'box-blue'; break;
-            case 'hourly': case 'مرخصی ساعتی': colorClass = 'box-green'; break;
-            case 'sick': case 'استعلاجی': colorClass = 'box-orange'; break;
-            case 'official_holiday': case 'تعطیل رسمی': colorClass = 'box-black'; break;
-            case 'absence': case 'غیبت': colorClass = 'box-red'; break;
+            case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
+            case 'hourly_leave': colorClass = 'box-green'; break;
+            case 'sick_leave': colorClass = 'box-orange'; break;
+            case 'official_holiday': colorClass = 'box-black'; break;
+            case 'absence': colorClass = 'box-red'; break;
           }
           boxesHtml += `<div class="status-box ${colorClass}">✔</div>`;
         } else boxesHtml += `<div class="status-box empty"></div>`;
@@ -674,7 +666,6 @@
     container.innerHTML = html;
   }
 
-  // --- سیستم پرسنل ---
   document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     let pCode = document.getElementById('empPersonnelCode').value.trim();
@@ -717,13 +708,11 @@
     if (confirm(`حذف ${name} و سوابقش؟`)) { await client.from('leave_records').delete().eq('employee_id', id); await client.from('employees').delete().eq('id', id); loadEmployeesList(); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); }
   }
 
-  // --- سیستم ثبت و ویرایش مرخصی ---
   document.getElementById('leaveForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('leaveStatus');
     const { data: { user } } = await client.auth.getUser();
     
-    // کپی کردن خودکار تاریخ برای مرخصی ساعتی یا جاافتاده
     if (!document.getElementById('endDateManual').value) {
         document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
     }
@@ -739,7 +728,6 @@
     else { status.style.color = "var(--danger)"; status.innerText = "خطا در ثبت: " + error.message; }
   });
 
-  // توابع ویرایش مرخصی
   function openEditRecordModal(id, type, start, end, note) {
     document.getElementById('editRecordId').value = id;
     document.getElementById('editRecordType').value = type;
@@ -764,7 +752,6 @@
     const status = document.getElementById('editRecordStatus');
     status.innerText = "در حال ذخیره...";
     
-    // کپی کردن خودکار تاریخ برای ویرایش
     if (!document.getElementById('editEndDateManual').value) {
         document.getElementById('editEndDateManual').value = document.getElementById('editStartDateManual').value;
     }
@@ -802,11 +789,11 @@
         const diff = Math.max(0, Math.floor((new Date(rec.end_at)-new Date(rec.start_at))/60000));
         const days = Math.max(1, Math.ceil(diff/1440));
         switch(rec.record_type) {
-          case 'daily': case 'مرخصی روزانه': dM += days*WORK_DAY_MINUTES; break;
-          case 'hourly': case 'مرخصی ساعتی': hM += diff; break;
-          case 'sick': case 'استعلاجی': sM += days*WORK_DAY_MINUTES; break;
-          case 'official_holiday': case 'تعطیل رسمی': holM += days*WORK_DAY_MINUTES; break;
-          case 'absence': case 'غیبت': aM += days*WORK_DAY_MINUTES; break;
+          case 'daily_leave': case 'daily': dM += days*WORK_DAY_MINUTES; break;
+          case 'hourly_leave': hM += diff; break;
+          case 'sick_leave': sM += days*WORK_DAY_MINUTES; break;
+          case 'official_holiday': holM += days*WORK_DAY_MINUTES; break;
+          case 'absence': aM += days*WORK_DAY_MINUTES; break;
         }
       });
       const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
