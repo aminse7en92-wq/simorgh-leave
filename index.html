@@ -99,7 +99,6 @@
     .badge { display: inline-block; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; background: #dcfce7; color: #166534; text-align: center; }
     .badge small { display: block; font-size: 0.75rem; font-weight: normal; margin-top: 2px; }
     
-    /* استایل مستطیل رنگی درشت برای نوع مرخصی در سوابق */
     .record-type-badge {
       display: inline-block; padding: 5px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: white; margin-right: 8px;
     }
@@ -258,11 +257,27 @@
       </div>
     </div>
 
-    <!-- تب گزارش -->
+    <!-- تب گزارش با فیلتر بازه تاریخ -->
     <div id="tabRemaining" class="tab-content hidden">
-      <h2>📊 گزارش باقی‌مانده</h2>
+      <h2>📊 گزارش باقی‌مانده و اکسل</h2>
       <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
       
+      <!-- فیلتر بازه تاریخ برای گزارش اکسل -->
+      <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
+        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 بازه تاریخ برای خروجی اکسل (اختیاری)</h3>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:0.75rem;">از تاریخ:</label>
+            <input type="text" id="reportStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem;">تا تاریخ:</label>
+            <input type="text" id="reportEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
+          </div>
+        </div>
+        <small style="color:var(--text-muted); display:block; text-align:right; font-size:0.75rem;">اگر تاریخ‌ها خالی باشند، کل سوابق سال خروجی داده می‌شود.</small>
+      </div>
+
       <button class="btn-export" onclick="exportRemainingCSV()">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.768C6.35 8.68 7.5 9.5 8 9.5c.5 0 1.65-.82 2.884-2.052a.5.5 0 1 0-.768-.768C9.06 7.74 8.16 8.5 8 8.5c-.16 0-1.06-.76-2.116-1.82z"/><path d="M8 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 0z"/><path d="M1.5 11.5A.5.5 0 0 1 2 11h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-2z"/></svg>
         دانلود گزارش در فایل اکسل
@@ -440,7 +455,7 @@
       .trim();
   }
 
-  const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual'];
+  const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual', 'reportStartDate', 'reportEndDate'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
@@ -682,7 +697,6 @@
     });
   }
 
-  // نمایش شماره پرسنلی همراه با نام در منوی انتخاب ثبت مرخصی
   function filterLeaveSelect(query) {
     const filter = normalizeText(query);
     const terms = filter.split(' ').filter(t => t !== '');
@@ -707,7 +721,30 @@
     }
   }
 
+  // خروجی اکسل با قابلیت فیلتر بر اساس بازه تاریخ
   async function exportRemainingCSV() {
+    const startStr = document.getElementById('reportStartDate').value;
+    const endStr = document.getElementById('reportEndDate').value;
+    
+    let startDate = null;
+    let endDate = null;
+    
+    if (startStr) {
+      const p = toEnglishDigits(startStr).split('/').map(Number);
+      if (p.length === 3) {
+        const g = shamsiToGregorian(p[0], p[1], p[2]);
+        startDate = new Date(g.gy, g.gm - 1, g.gd, 0, 0, 0);
+      }
+    }
+    
+    if (endStr) {
+      const p = toEnglishDigits(endStr).split('/').map(Number);
+      if (p.length === 3) {
+        const g = shamsiToGregorian(p[0], p[1], p[2]);
+        endDate = new Date(g.gy, g.gm - 1, g.gd, 23, 59, 59);
+      }
+    }
+
     alert('در حال آماده‌سازی فایل اکسل...');
     const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
@@ -719,7 +756,18 @@
     csvContent += "کد پرسنلی,نام و نام خانوادگی,محل کار,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,مانده (روز),مانده (ساعت)\n";
 
     employees.forEach(emp => {
-      const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+      let empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+      
+      // فیلتر کردن سوابق بر اساس بازه تاریخ اگر وارد شده باشد
+      if (startDate || endDate) {
+        empRecords = empRecords.filter(rec => {
+          const recStart = new Date(rec.start_at);
+          if (startDate && recStart < startDate) return false;
+          if (endDate && recStart > endDate) return false;
+          return true;
+        });
+      }
+
       let dM=0, hM=0, sM=0, holM=0, aM=0;
       empRecords.forEach(rec => {
         const diffMinutes = Math.max(0, Math.floor((new Date(rec.end_at) - new Date(rec.start_at)) / 60000));
@@ -739,7 +787,7 @@
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a"); const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url); link.setAttribute("download", "گزارش_مرخصی.csv");
+    link.setAttribute("href", url); link.setAttribute("download", "گزارش_مرخصی_بازه_تاریخ.csv");
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
