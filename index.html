@@ -7,7 +7,6 @@
   <link rel="icon" href="icon.png" type="image/png">
   <link rel="apple-touch-icon" href="icon.png">
   
-  <!-- تنظیمات PWA برای دسکتاپ و موبایل جهت نمایش آیکون سیمرغ -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#047857">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -165,10 +164,10 @@
 <div class="container">
   
   <div id="loginSection">
-    <h2>🔐 ورود مدیر سیستم</h2>
+    <h2>🔐 ورود سیستم</h2>
     <form id="loginForm">
-      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="مثال: امین سعید" autocomplete="username"></div>
-      <div class="form-group"><label>رمز عبور:</label><input type="password" id="loginPassword" required placeholder="******"></div>
+      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="نام کاربری" autocomplete="username"></div>
+      <div class="form-group"><label>کلمه عبور:</label><input type="password" id="loginPassword" required placeholder="کلمه عبور"></div>
       
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
         <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--primary);">
@@ -507,22 +506,22 @@
 
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const usernameInput = document.getElementById('loginUsername').value.trim();
+    const inputVal = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
 
-    let email = usernameInput;
-    if (!usernameInput.includes('@')) {
-      if (usernameInput === 'امین سعید') {
-        email = 'amin.saeed@simorgh.local';
-      } else {
-        email = usernameInput.replace(/\s+/g, '') + '@simorgh.local';
-      }
+    const userMapping = {
+      'امین سعید': 'amin.saeed@simorgh.local',
+    };
+
+    let email = inputVal;
+    if (!inputVal.includes('@')) {
+      email = userMapping[inputVal] || (inputVal.replace(/\s+/g, '') + '@simorgh.local');
     }
 
     if (rememberMe) {
       localStorage.setItem('rememberMe', 'true');
-      localStorage.setItem('savedUsername', usernameInput);
+      localStorage.setItem('savedUsername', inputVal);
       localStorage.setItem('savedPassword', password);
     } else {
       localStorage.removeItem('rememberMe'); localStorage.removeItem('savedUsername'); localStorage.removeItem('savedPassword');
@@ -532,7 +531,12 @@
     status.innerText = "در حال ورود به سیستم...";
     try {
       const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) { status.style.color = "var(--danger)"; status.innerText = "خطا در نام کاربری یا رمز عبور."; } else { init(); }
+      if (error) { 
+        status.style.color = "var(--danger)"; 
+        status.innerText = "خطا در نام کاربری یا کلمه عبور."; 
+      } else { 
+        init(); 
+      }
     } catch(err) {
       status.style.color = "var(--danger)"; status.innerText = "خطای ارتباط با سرور. اینترنت را چک کنید.";
     }
