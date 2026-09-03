@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦅</text></svg>">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦅</text></svg>">
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#047857">
@@ -47,9 +47,7 @@
     .app-logo {
       width: 70px; height: 70px; object-fit: contain; background: white;
       border-radius: 50%; padding: 6px; margin-bottom: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex;
-      justify-content: center; align-items: center; margin-left: auto; margin-right: auto;
-      font-size: 35px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
     .dashboard-header h2 { margin: 0; font-size: 1.15rem; color: white; line-height: 1.6; }
     .dashboard-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
@@ -191,7 +189,7 @@
 
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
-        <div class="app-logo">🦅</div>
+        <img src="icon.png" alt="لوگو سیمرغ" class="app-logo">
         <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
@@ -494,6 +492,7 @@
   function getPersianName(val) {
     if (!val) return 'سیستم';
     if (reverseUserMapping[val]) return reverseUserMapping[val];
+    // اگر شناسه سیستمی (UUID) بود ولی در مپینگ نبود، بررسی بر اساس تطابق نسبی یا بازگرداندن پیش‌فرض
     if (val.length > 20) {
       if (val.includes('d1a0c01a')) return 'امین سعید';
       if (val.includes('f57ed6b6')) return 'امین سعید';
@@ -1221,7 +1220,7 @@
       case 'daily_leave': case 'daily': return 'badge-blue';
       case 'hourly_leave': return 'badge-green';
       case 'sick_leave': return 'badge-orange';
-      case 'official_holiday': case 'badge-black';
+      case 'official_holiday': return 'badge-black';
       case 'absence': return 'badge-red';
       default: return 'badge-blue';
     }
