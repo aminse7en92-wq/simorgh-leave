@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- معرفی آیکون به مرورگرها و گوشی‌های اندروید و آیفون -->
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="مرخصی سیمرغ">
+
   <title>مدیریت مرخصی سیمرغ</title>
   
   <!-- Supabase JS -->
@@ -251,7 +259,7 @@
       </div>
     </div>
 
-    <!-- تب گزارش -->
+    <!-- تب گزارش باقی مانده -->
     <div id="tabRemaining" class="tab-content hidden">
       <h2>📊 گزارش باقی‌مانده</h2>
       <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
@@ -261,7 +269,7 @@
         دانلود گزارش در فایل اکسل
       </button>
 
-      <input type="text" class="search-input" placeholder="برای مشاهده گزارش، نام شخص را جستجو کنید..." oninput="filterRemaining(this.value)">
+      <input type="text" id="searchInputRemaining" class="search-input" placeholder="برای مشاهده گزارش، نام شخص را جستجو کنید..." oninput="filterRemaining(this.value)">
       
       <p id="remainingHint" style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-top: 20px;">
         🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.
@@ -270,6 +278,7 @@
       <div id="remainingList"></div>
     </div>
 
+    <!-- تب پرسنل -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
       <div class="card">
@@ -408,6 +417,20 @@
   const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // -----------------------------------------------------------------
+  // تابع طلایی برای هوشمندسازی و یکسان‌سازی حروف در جستجوهای فارسی
+  // -----------------------------------------------------------------
+  function normalizeText(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/ي/g, 'ی')
+      .replace(/ك/g, 'ک')
+      .replace(/آ/g, 'ا')
+      .replace(/\u200C/g, ' ') // تبدیل نیم‌فاصله به فاصله
+      .toLowerCase()
+      .trim();
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('rememberMe') === 'true') {
       document.getElementById('loginEmail').value = localStorage.getItem('savedEmail') || '';
@@ -442,9 +465,6 @@
 
   document.getElementById('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); init(); });
 
-  // -----------------------------------------------------------------
-  // بخش تقویم و باز شدن اجباری کیبورد در گوشی
-  // -----------------------------------------------------------------
   try {
     const datePickerOptions = {
       placeholder: "مثال: 1403/06/12", twodigit: true, closeAfterSelect: true,
@@ -456,7 +476,6 @@
     kamaDatepicker('editStartDateManual', datePickerOptions); kamaDatepicker('editEndDateManual', datePickerOptions);
   } catch (err) {}
 
-  // این تابع به محض کلیک شدن روی کادر تاریخ، قفل آن را می‌شکند تا کیبورد قطعا باز شود
   function forceKeyboardUnlock() {
     const ids = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual'];
     ids.forEach(id => {
@@ -470,7 +489,6 @@
     });
   }
   forceKeyboardUnlock();
-  // -----------------------------------------------------------------
 
   const WORK_DAY_MINUTES = 7 * 60 + 20; 
   const TOTAL_ANNUAL_DAYS = 26;
@@ -501,7 +519,10 @@
     if(tabId === 'tabRemaining') {
       loadRemainingLeave();
       const hint = document.getElementById('remainingHint');
-      if(hint) hint.style.display = 'block';
+      if(hint) {
+          hint.style.display = 'block';
+          hint.innerText = '🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.';
+      }
     } else if(tabId === 'tabRecords') {
       loadRecords();
     } else if(tabId === 'tabDashboard') {
@@ -512,37 +533,59 @@
   }
 
   function filterDOM(containerId, query) {
-    const filter = query.toLowerCase();
+    const filter = normalizeText(query);
+    const terms = filter.split(' ').filter(t => t !== '');
     const items = document.getElementById(containerId).querySelectorAll('.leave-summary-card, .emp-item, .card');
+    
     items.forEach(item => {
-      const name = item.getAttribute('data-name') || item.innerText;
-      item.style.display = name.toLowerCase().includes(filter) ? "" : "none";
+      const name = normalizeText(item.getAttribute('data-name') || item.innerText);
+      const isMatch = terms.every(term => name.includes(term));
+      item.style.display = isMatch ? "" : "none";
     });
   }
 
   function filterRecords(query) {
-    const filter = toEnglishDigits(query.toLowerCase().trim());
+    const filter = normalizeText(toEnglishDigits(query));
+    const terms = filter.split(' ').filter(t => t !== '');
     const items = document.getElementById('recordsList').querySelectorAll('.card');
+    
     items.forEach(item => {
-      const searchStr = item.getAttribute('data-search') || '';
-      item.style.display = searchStr.includes(filter) ? "" : "none";
+      const searchStr = normalizeText(item.getAttribute('data-search'));
+      const isMatch = terms.every(term => searchStr.includes(term));
+      item.style.display = isMatch ? "" : "none";
     });
   }
 
+  // --- آپدیت جستجوی هوشمند برای تب باقیمانده ---
   function filterRemaining(query) {
-    const filter = query.toLowerCase().trim();
+    const filter = normalizeText(query);
+    const terms = filter.split(' ').filter(t => t !== '');
     const items = document.getElementById('remainingList').querySelectorAll('.leave-summary-card');
     const hint = document.getElementById('remainingHint');
     
-    if (filter === '') {
+    if (terms.length === 0) {
       items.forEach(item => item.style.display = 'none');
-      if(hint) hint.style.display = 'block';
+      if(hint) {
+          hint.style.display = 'block';
+          hint.innerText = '🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.';
+      }
     } else {
+      let hasResult = false;
       items.forEach(item => {
-        const name = item.getAttribute('data-name') || '';
-        item.style.display = name.toLowerCase().includes(filter) ? "" : "none";
+        const name = normalizeText(item.getAttribute('data-name'));
+        const isMatch = terms.every(term => name.includes(term));
+        item.style.display = isMatch ? "" : "none";
+        if(isMatch) hasResult = true;
       });
-      if(hint) hint.style.display = 'none';
+      
+      if(hint) {
+          if (hasResult) {
+              hint.style.display = 'none';
+          } else {
+              hint.style.display = 'block';
+              hint.innerText = '❌ شخصی با این مشخصات یافت نشد.';
+          }
+      }
     }
   }
 
@@ -559,14 +602,15 @@
   }
 
   function applyEmployeeFilters() {
-    const filter = (window.currentSearchQuery || '').toLowerCase();
+    const filter = normalizeText(window.currentSearchQuery);
+    const terms = filter.split(' ').filter(t => t !== '');
     const jobFilter = window.currentJobFilter;
     
     document.querySelectorAll('#employeesManageList .emp-item').forEach(item => {
-      const name = (item.getAttribute('data-name') || '').toLowerCase();
+      const name = normalizeText(item.getAttribute('data-name'));
       const itemJob = item.getAttribute('data-job') || 'سایر';
       
-      const matchesSearch = name.includes(filter);
+      const matchesSearch = terms.length === 0 ? true : terms.every(term => name.includes(term));
       const matchesJob = (jobFilter === 'all') || (itemJob === jobFilter);
       
       item.style.display = (matchesSearch && matchesJob) ? "flex" : "none";
@@ -574,12 +618,24 @@
   }
 
   function filterLeaveSelect(query) {
+    const filter = normalizeText(query);
+    const terms = filter.split(' ').filter(t => t !== '');
     const select = document.getElementById('employeeSelect');
-    const q = query.toLowerCase();
-    const filtered = allEmployeesData.filter(e => e.full_name.toLowerCase().includes(q) || (e.personnel_code && e.personnel_code.includes(q)));
+    
+    let filtered = allEmployeesData;
+    if (terms.length > 0) {
+        filtered = allEmployeesData.filter(e => {
+            const name = normalizeText(e.full_name);
+            const code = normalizeText(e.personnel_code);
+            return terms.every(term => name.includes(term) || code.includes(term));
+        });
+    }
+
     if (filtered.length > 0) {
       select.innerHTML = `<option value="">انتخاب کنید...</option>` + filtered.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
-    } else { select.innerHTML = `<option value="">نتیجه‌ای یافت نشد</option>`; }
+    } else { 
+      select.innerHTML = `<option value="">نتیجه‌ای یافت نشد</option>`; 
+    }
   }
 
   async function exportRemainingCSV() {
@@ -910,13 +966,12 @@
       list.innerHTML = data.map(r => {
         const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
         
-        // محاسبه تاریخ برای موتور جستجو
         const sd = new Date(r.start_at);
         const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
         const dateStr = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`; 
         const dateStrNoZero = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`; 
         
-        const searchData = `${r.employees?r.employees.full_name:''} ${dateStr} ${dateStrNoZero}`.toLowerCase();
+        const searchData = `${r.employees?r.employees.full_name:''} ${dateStr} ${dateStrNoZero}`;
 
         return `<div class="card" data-search="${searchData}"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`;
       }).join('');
