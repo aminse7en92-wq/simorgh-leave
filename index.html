@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
-  <link rel="icon" href="icon.png" type="image/png">
-  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦅</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦅</text></svg>">
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#047857">
@@ -46,8 +46,9 @@
     }
     .app-logo {
       width: 70px; height: 70px; object-fit: contain; background: white;
-      border-radius: 50%; padding: 6px; margin-bottom: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border-radius: 50%; padding: 6px; margin-bottom: 10px; display: flex;
+      justify-content: center; align-items: center; margin-left: auto; margin-right: auto;
+      font-size: 35px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
     .dashboard-header h2 { margin: 0; font-size: 1.15rem; color: white; line-height: 1.6; }
     .dashboard-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
@@ -189,12 +190,11 @@
 
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
-        <img src="icon.png" alt="لوگو سیمرغ" class="app-logo">
+        <div class="app-logo">🦅</div>
         <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
-      <!-- نمایش نام کاربری وارد شده در بالای داشبورد -->
       <div class="user-welcome-card">
         <span>👤 کاربر وارد شده: <strong id="currentLoggedInUser" style="color:var(--primary);">...</strong></span>
         <button type="button" onclick="handleLogout()" style="margin:0; width:auto; padding:6px 12px; font-size:0.75rem; background:#fee2e2; color:var(--danger); border-radius:6px;">خروج</button>
@@ -485,9 +485,22 @@
 
   const reverseUserMapping = {
     'amin.saeed@simorgh.local': 'امین سعید',
+    'amin.se7en92@gmail.com': 'امین سعید',
     'm.gishinzadeh@simorgh.local': 'محمد گیشین زاده',
     'mehrdad@simorgh.local': 'مهرداد شادمان'
   };
+
+  function getPersianName(val) {
+    if (!val) return 'سیستم';
+    if (reverseUserMapping[val]) return reverseUserMapping[val];
+    if (val.length > 20) {
+      if (val.includes('d1a0c01a')) return 'امین سعید';
+      if (val.includes('f57ed6b6')) return 'امین سعید';
+      if (val.includes('11a7f58d')) return 'محمد گیشین زاده';
+      if (val.includes('3eab85f7')) return 'مهرداد شادمان';
+    }
+    return val;
+  }
 
   function normalizeText(str) {
     if (!str) return '';
@@ -918,9 +931,8 @@
       document.getElementById('appSection').classList.remove('hidden');
       document.getElementById('tabBar').classList.remove('hidden');
       
-      // نمایش نام کاربر لاگین شده در داشبورد
       const userEmail = session.user.email;
-      const displayName = reverseUserMapping[userEmail] || userEmail;
+      const displayName = getPersianName(userEmail);
       document.getElementById('currentLoggedInUser').innerText = displayName;
 
       await loadEmployeesList(); loadDashboard();
@@ -1138,8 +1150,7 @@
     if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است (مثال: 1403/06/12)."; return; }
     if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
 
-    // ثبت نام کاربر لاگین شده به عنوان ثبت‌کننده در دیتابیس
-    const creatorName = reverseUserMapping[user.email] || user.email;
+    const creatorName = getPersianName(user.email);
 
     const { error } = await client.from('leave_records').insert([{ 
       employee_id: document.getElementById('employeeSelect').value, 
@@ -1272,7 +1283,7 @@
 
         const badgeClass = getBadgeClass(r.record_type);
         const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
-        const creatorName = r.created_by || 'سیستم';
+        const creatorName = getPersianName(r.created_by);
 
         return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}" data-creator="${creatorName}">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
