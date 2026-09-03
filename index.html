@@ -167,7 +167,7 @@
   <div id="loginSection">
     <h2>🔐 ورود مدیر سیستم</h2>
     <form id="loginForm">
-      <div class="form-group"><label>ایمیل مدیر:</label><input type="email" id="loginEmail" required placeholder="example@mail.com" autocomplete="email"></div>
+      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="مثال: امین سعید" autocomplete="username"></div>
       <div class="form-group"><label>رمز عبور:</label><input type="password" id="loginPassword" required placeholder="******"></div>
       
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
@@ -340,7 +340,7 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق با مرتب‌سازی بر اساس تاریخ شروع -->
+    <!-- تب سوابق -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
       
@@ -499,7 +499,7 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('rememberMe') === 'true') {
-      document.getElementById('loginEmail').value = localStorage.getItem('savedEmail') || '';
+      document.getElementById('loginUsername').value = localStorage.getItem('savedUsername') || '';
       document.getElementById('loginPassword').value = localStorage.getItem('savedPassword') || '';
       document.getElementById('rememberMe').checked = true;
     }
@@ -507,23 +507,32 @@
 
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
+    const usernameInput = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
 
+    let email = usernameInput;
+    if (!usernameInput.includes('@')) {
+      if (usernameInput === 'امین سعید') {
+        email = 'amin.saeed@simorgh.local';
+      } else {
+        email = usernameInput.replace(/\s+/g, '') + '@simorgh.local';
+      }
+    }
+
     if (rememberMe) {
       localStorage.setItem('rememberMe', 'true');
-      localStorage.setItem('savedEmail', email);
+      localStorage.setItem('savedUsername', usernameInput);
       localStorage.setItem('savedPassword', password);
     } else {
-      localStorage.removeItem('rememberMe'); localStorage.removeItem('savedEmail'); localStorage.removeItem('savedPassword');
+      localStorage.removeItem('rememberMe'); localStorage.removeItem('savedUsername'); localStorage.removeItem('savedPassword');
     }
 
     const status = document.getElementById('loginStatus'); 
     status.innerText = "در حال ورود به سیستم...";
     try {
       const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) { status.style.color = "var(--danger)"; status.innerText = "خطا: " + error.message; } else { init(); }
+      if (error) { status.style.color = "var(--danger)"; status.innerText = "خطا در نام کاربری یا رمز عبور."; } else { init(); }
     } catch(err) {
       status.style.color = "var(--danger)"; status.innerText = "خطای ارتباط با سرور. اینترنت را چک کنید.";
     }
@@ -1200,7 +1209,6 @@
 
   async function loadRecords() {
     const list = document.getElementById('recordsList');
-    // مرتب‌سازی رکوردها بر اساس تاریخ شروع (از جدیدترین به قدیمی‌ترین)
     const { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name)').order('start_at', { ascending: false });
     if(data) {
       let html = data.map(r => {
