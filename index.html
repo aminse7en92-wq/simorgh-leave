@@ -166,7 +166,7 @@
   <div id="loginSection">
     <h2>🔐 ورود سیستم</h2>
     <form id="loginForm">
-      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="نام کاربری" autocomplete="username"></div>
+      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="مثال: امین سعید" autocomplete="username"></div>
       <div class="form-group"><label>کلمه عبور:</label><input type="password" id="loginPassword" required placeholder="کلمه عبور"></div>
       
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
@@ -201,7 +201,6 @@
       </h3>
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
 
-      <!-- دکمه خروج از حساب کاربری در داشبورد -->
       <button type="button" class="btn-logout" onclick="handleLogout()" style="margin-top: 30px; background: #fee2e2; color: var(--danger);">خروج از حساب کاربری</button>
     </div>
 
@@ -513,6 +512,7 @@
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
 
+    // نقشه دقیق نام‌های فارسی سه نفر به ایمیل‌های ثبت‌شده در Supabase
     const userMapping = {
       'امین سعید': 'amin.saeed@simorgh.local',
       'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
