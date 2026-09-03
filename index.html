@@ -383,7 +383,7 @@
       <div class="form-group">
         <label>شروع:</label>
         <div class="date-time-group">
-          <input type="text" id="editStartDateManual" required placeholder="__ / __ / ____" autocomplete="off" inputmode="numeric" maxlength="10">
+          <input type="text" id="editStartDateManual" required placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
           <input type="time" id="editStartTimeManual" required>
         </div>
       </div>
@@ -391,7 +391,7 @@
       <div class="form-group">
         <label>پایان:</label>
         <div class="date-time-group">
-          <input type="text" id="editEndDateManual" placeholder="__ / __ / ____" autocomplete="off" inputmode="numeric" maxlength="10">
+          <input type="text" id="editEndDateManual" placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
           <input type="time" id="editEndTimeManual" required>
         </div>
         <small style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی ساعتی، نیاز به پر کردن تاریخ پایان نیست.</small>
@@ -429,14 +429,15 @@
       .trim();
   }
 
+  // سیستم تایپ هوشمند تاریخ با ظرفیت کامل برای روزهای دو رقمی
   const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
       el.addEventListener('input', function(e) {
         let v = toEnglishDigits(e.target.value).replace(/\D/g, '');
-        if (v.length > 4) v = v.substring(0, 4) + ' / ' + v.substring(4);
-        if (v.length > 9) v = v.substring(0, 9) + ' / ' + v.substring(9, 11);
+        if (v.length > 4) v = v.substring(0, 4) + '/' + v.substring(4);
+        if (v.length > 7) v = v.substring(0, 7) + '/' + v.substring(7, 9);
         e.target.value = v;
       });
     }
