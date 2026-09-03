@@ -52,6 +52,12 @@
     .dashboard-header h2 { margin: 0; font-size: 1.15rem; color: white; line-height: 1.6; }
     .dashboard-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
 
+    .user-welcome-card {
+      background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1e3a8a;
+      padding: 12px 15px; border-radius: 12px; margin-bottom: 15px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+    }
+
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
     
@@ -187,6 +193,13 @@
         <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
+
+      <!-- نمایش نام کاربری وارد شده در بالای داشبورد -->
+      <div class="user-welcome-card">
+        <span>👤 کاربر وارد شده: <strong id="currentLoggedInUser" style="color:var(--primary);">...</strong></span>
+        <button type="button" onclick="handleLogout()" style="margin:0; width:auto; padding:6px 12px; font-size:0.75rem; background:#fee2e2; color:var(--danger); border-radius:6px;">خروج</button>
+      </div>
+
       <h3 style="text-align: right; font-size: 1rem; margin-top: 20px;">خلاصه وضعیت سیستم</h3>
       
       <div class="detail-grid" id="dashboardStats"><div style="text-align: center; padding: 20px; color: var(--text-muted); grid-column: span 2;">در حال بارگذاری...</div></div>
@@ -200,8 +213,6 @@
         برنامه‌ریزی مرخصی <span style="color:var(--warning);">(فردا)</span>
       </h3>
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
-
-      <button type="button" class="btn-logout" onclick="handleLogout()" style="margin-top: 30px; background: #fee2e2; color: var(--danger);">خروج از حساب کاربری</button>
     </div>
 
     <div id="tabMonthlyStatus" class="tab-content hidden">
@@ -466,6 +477,18 @@
   const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  const userMapping = {
+    'امین سعید': 'amin.saeed@simorgh.local',
+    'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
+    'مهرداد شادمان': 'mehrdad@simorgh.local'
+  };
+
+  const reverseUserMapping = {
+    'amin.saeed@simorgh.local': 'امین سعید',
+    'm.gishinzadeh@simorgh.local': 'محمد گیشین زاده',
+    'mehrdad@simorgh.local': 'مهرداد شادمان'
+  };
+
   function normalizeText(str) {
     if (!str) return '';
     return String(str)
@@ -509,15 +532,8 @@
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const inputVal = document.getElementById('loginUsername').value.trim();
-    // تبدیل خودکار اعداد فارسی رمز عبور به انگلیسی (برای اینکه به فارسی/انگلیسی بودن اعداد حساس نباشد)
     const password = toEnglishDigits(document.getElementById('loginPassword').value);
     const rememberMe = document.getElementById('rememberMe').checked;
-
-    const userMapping = {
-      'امین سعید': 'amin.saeed@simorgh.local',
-      'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
-      'مهرداد شادمان': 'mehrdad@simorgh.local'
-    };
 
     let email = inputVal;
     if (!inputVal.includes('@')) {
@@ -551,8 +567,6 @@
     await client.auth.signOut();
     init();
   }
-
-  document.getElementById('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); init(); });
 
   const WORK_DAY_MINUTES = 7 * 60 + 20; 
   const TOTAL_ANNUAL_DAYS = 26;
@@ -723,7 +737,7 @@
     }
 
     let csvContent = '\uFEFF';
-    csvContent += "نام پرسنل,نوع مرخصی,تاریخ و ساعت شروع,تاریخ و ساعت پایان\n";
+    csvContent += "نام پرسنل,نوع مرخصی,تاریخ و ساعت شروع,تاریخ و ساعت پایان,ثبت‌کننده\n";
 
     visibleCards.forEach(card => {
       const strongEl = card.querySelector('strong');
@@ -734,8 +748,9 @@
       const spans = card.querySelectorAll('span[dir="ltr"]');
       const start = spans.length > 0 ? spans[0].innerText : '';
       const end = spans.length > 1 ? spans[1].innerText : '';
+      const creator = card.getAttribute('data-creator') || '';
       
-      csvContent += `"${name}","${type}","${start}","${end}"\n`;
+      csvContent += `"${name}","${type}","${start}","${end}","${creator}"\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -902,6 +917,12 @@
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('appSection').classList.remove('hidden');
       document.getElementById('tabBar').classList.remove('hidden');
+      
+      // نمایش نام کاربر لاگین شده در داشبورد
+      const userEmail = session.user.email;
+      const displayName = reverseUserMapping[userEmail] || userEmail;
+      document.getElementById('currentLoggedInUser').innerText = displayName;
+
       await loadEmployeesList(); loadDashboard();
     } else {
       document.getElementById('loginSection').classList.remove('hidden');
@@ -1117,7 +1138,18 @@
     if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است (مثال: 1403/06/12)."; return; }
     if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
 
-    const { error } = await client.from('leave_records').insert([{ employee_id: document.getElementById('employeeSelect').value, record_type: document.getElementById('recordType').value, start_at: startObj.toISOString(), end_at: endObj.toISOString(), note: document.getElementById('note').value, created_by: user.id }]);
+    // ثبت نام کاربر لاگین شده به عنوان ثبت‌کننده در دیتابیس
+    const creatorName = reverseUserMapping[user.email] || user.email;
+
+    const { error } = await client.from('leave_records').insert([{ 
+      employee_id: document.getElementById('employeeSelect').value, 
+      record_type: document.getElementById('recordType').value, 
+      start_at: startObj.toISOString(), 
+      end_at: endObj.toISOString(), 
+      note: document.getElementById('note').value, 
+      created_by: creatorName 
+    }]);
+
     if (!error) { status.style.color = "var(--success)"; status.innerText = "ثبت شد!"; document.getElementById('note').value = ''; loadDashboard(); loadMonthlyStatus(); }
     else { status.style.color = "var(--danger)"; status.innerText = "خطا در ثبت: " + error.message; }
   });
@@ -1240,8 +1272,9 @@
 
         const badgeClass = getBadgeClass(r.record_type);
         const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
+        const creatorName = r.created_by || 'سیستم';
 
-        return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}">
+        return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}" data-creator="${creatorName}">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div>
               <strong>${emp ? emp.full_name : 'نامشخص'}</strong>
@@ -1250,6 +1283,7 @@
             <span class="record-type-badge ${badgeClass}">${typeLabel}</span>
           </div>
           <div style="margin-top: 8px;"><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small></div>
+          <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">ثبت شده توسط: <strong>${creatorName}</strong></div>
           <div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div>
         </div>`;
       }).join('');
