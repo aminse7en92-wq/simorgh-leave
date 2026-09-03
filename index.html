@@ -257,12 +257,11 @@
       </div>
     </div>
 
-    <!-- تب گزارش با فیلتر بازه تاریخ -->
+    <!-- تب گزارش -->
     <div id="tabRemaining" class="tab-content hidden">
       <h2>📊 گزارش باقی‌مانده و اکسل</h2>
       <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
       
-      <!-- فیلتر بازه تاریخ برای گزارش اکسل -->
       <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
         <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 بازه تاریخ برای خروجی اکسل (اختیاری)</h3>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -337,10 +336,25 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق -->
+    <!-- تب سوابق با قابلیت فیلتر بازه تاریخ -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
       
+      <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
+        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 فیلتر سوابق بر اساس بازه تاریخ</h3>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:0.75rem;">از تاریخ:</label>
+            <input type="text" id="filterStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem;">تا تاریخ:</label>
+            <input type="text" id="filterEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
+          </div>
+        </div>
+        <button type="button" onclick="clearRecordsDateFilter()" style="margin-top:0; padding:8px; background:var(--border-color); color:var(--text-main); font-size:0.8rem;">حذف فیلتر تاریخ (نمایش همه)</button>
+      </div>
+
       <div class="month-filters" id="monthFiltersContainer">
         <button type="button" class="month-btn active" onclick="filterByMonth('all', this)">همه ماه‌ها</button>
         <button type="button" class="month-btn" onclick="filterByMonth('01', this)">فروردین</button>
@@ -455,7 +469,7 @@
       .trim();
   }
 
-  const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual', 'reportStartDate', 'reportEndDate'];
+  const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual', 'reportStartDate', 'reportEndDate', 'filterStartDate', 'filterEndDate'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
@@ -538,6 +552,8 @@
     if(tabId === 'tabEmployees') { window.currentSearchQuery = ''; applyEmployeeFilters(); }
     if(tabId === 'tabRecords') {
       window.currentMonthFilter = 'all';
+      document.getElementById('filterStartDate').value = '';
+      document.getElementById('filterEndDate').value = '';
       document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
       document.querySelector('.month-btn').classList.add('active');
       loadRecords();
@@ -574,37 +590,58 @@
     if(btn) btn.classList.add('active');
     window.currentMonthFilter = monthCode;
     
-    const listContainer = document.getElementById('recordsList');
-    const items = listContainer.querySelectorAll('.card');
-    let visibleCount = 0;
+    // پاک کردن فیلتر بازه تاریخ هنگام انتخاب ماه
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    
+    applyRecordsFilters();
+  }
 
-    items.forEach(item => {
-      const itemMonth = item.getAttribute('data-month') || '';
-      const matchesMonth = (monthCode === 'all') || (itemMonth === monthCode);
-      item.style.display = matchesMonth ? "" : "none";
-      if(matchesMonth) visibleCount++;
-    });
+  function applyRecordsDateFilter() {
+    // غیرفعال کردن دکمه‌های ماه وقتی بازه تاریخ دستی وارد می‌شود
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    window.currentMonthFilter = 'all';
+    applyRecordsFilters();
+  }
 
-    let emptyMsg = document.getElementById('emptyMonthMsg');
-    if (visibleCount === 0) {
-      if (!emptyMsg) {
-        emptyMsg = document.createElement('div');
-        emptyMsg.id = 'emptyMonthMsg';
-        emptyMsg.style.cssText = 'text-align:center; color:var(--text-muted); padding:30px; font-size:0.95rem;';
-        emptyMsg.innerText = '📂 رکوردی در این ماه موجود نیست.';
-        listContainer.appendChild(emptyMsg);
-      } else {
-        emptyMsg.style.display = 'block';
-      }
-    } else if (emptyMsg) {
-      emptyMsg.style.display = 'none';
-    }
+  function clearRecordsDateFilter() {
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.month-btn').classList.add('active');
+    window.currentMonthFilter = 'all';
+    applyRecordsFilters();
   }
 
   function filterRecords(query) {
+    applyRecordsFilters();
+  }
+
+  function applyRecordsFilters() {
+    const query = document.querySelector('#tabRecords .search-input').value;
     const filter = normalizeText(toEnglishDigits(query));
     const terms = filter.split(' ').filter(t => t !== '');
     const monthCode = window.currentMonthFilter;
+    
+    const startStr = document.getElementById('filterStartDate').value;
+    const endStr = document.getElementById('filterEndDate').value;
+    
+    let fStart = null, fEnd = null;
+    if (startStr) {
+      const p = toEnglishDigits(startStr).split('/').map(Number);
+      if (p.length === 3) {
+        const g = shamsiToGregorian(p[0], p[1], p[2]);
+        fStart = new Date(g.gy, g.gm - 1, g.gd, 0, 0, 0);
+      }
+    }
+    if (endStr) {
+      const p = toEnglishDigits(endStr).split('/').map(Number);
+      if (p.length === 3) {
+        const g = shamsiToGregorian(p[0], p[1], p[2]);
+        fEnd = new Date(g.gy, g.gm - 1, g.gd, 23, 59, 59);
+      }
+    }
+
     const listContainer = document.getElementById('recordsList');
     const items = listContainer.querySelectorAll('.card');
     let visibleCount = 0;
@@ -612,11 +649,22 @@
     items.forEach(item => {
       const searchStr = normalizeText(item.getAttribute('data-search'));
       const itemMonth = item.getAttribute('data-month') || '';
+      const itemStartTime = Number(item.getAttribute('data-start-time') || 0);
       
       const matchesSearch = terms.every(term => searchStr.includes(term));
-      const matchesMonth = (monthCode === 'all') || (itemMonth === monthCode);
       
-      const isVisible = matchesSearch && matchesMonth;
+      let matchesMonth = true;
+      if (monthCode !== 'all') {
+        matchesMonth = (itemMonth === monthCode);
+      }
+      
+      let matchesDateRange = true;
+      if (fStart || fEnd) {
+        if (fStart && itemStartTime < fStart.getTime()) matchesDateRange = false;
+        if (fEnd && itemStartTime > fEnd.getTime()) matchesDateRange = false;
+      }
+      
+      const isVisible = matchesSearch && matchesMonth && matchesDateRange;
       item.style.display = isVisible ? "" : "none";
       if(isVisible) visibleCount++;
     });
@@ -721,7 +769,6 @@
     }
   }
 
-  // خروجی اکسل با قابلیت فیلتر بر اساس بازه تاریخ
   async function exportRemainingCSV() {
     const startStr = document.getElementById('reportStartDate').value;
     const endStr = document.getElementById('reportEndDate').value;
@@ -758,7 +805,6 @@
     employees.forEach(emp => {
       let empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
       
-      // فیلتر کردن سوابق بر اساس بازه تاریخ اگر وارد شده باشد
       if (startDate || endDate) {
         empRecords = empRecords.filter(rec => {
           const recStart = new Date(rec.start_at);
@@ -1133,13 +1179,10 @@
         const searchData = `${emp ? emp.full_name : ''} ${emp ? emp.personnel_code : ''} ${dateStr} ${dateStrNoZero}`;
         const recordMonth = String(sShamsi.month);
 
-        const currentMonth = window.currentMonthFilter;
-        const displayStyle = (currentMonth === 'all' || currentMonth === recordMonth) ? '' : 'display:none;';
-        
         const badgeClass = getBadgeClass(r.record_type);
         const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
 
-        return `<div class="card" data-month="${recordMonth}" data-search="${normalizeText(searchData)}" style="${displayStyle}">
+        return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div>
               <strong>${emp ? emp.full_name : 'نامشخص'}</strong>
@@ -1153,7 +1196,7 @@
       }).join('');
 
       list.innerHTML = html;
-      filterByMonth(window.currentMonthFilter, document.querySelector('.month-btn.active'));
+      applyRecordsFilters();
     }
   }
 
