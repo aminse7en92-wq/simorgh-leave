@@ -200,6 +200,9 @@
         برنامه‌ریزی مرخصی <span style="color:var(--warning);">(فردا)</span>
       </h3>
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
+
+      <!-- دکمه خروج از حساب کاربری در داشبورد -->
+      <button type="button" class="btn-logout" onclick="handleLogout()" style="margin-top: 30px; background: #fee2e2; color: var(--danger);">خروج از حساب کاربری</button>
     </div>
 
     <div id="tabMonthlyStatus" class="tab-content hidden">
@@ -375,7 +378,7 @@
 
       <input type="text" class="search-input" placeholder="جستجوی نام، شماره پرسنلی یا تاریخ..." oninput="filterRecords(this.value)">
       <div id="recordsList">در حال دریافت...</div>
-      <button id="logoutBtn" class="btn-logout">خروج از حساب کاربری</button>
+      <button id="logoutBtn" class="btn-logout" style="display:none;">خروج از حساب کاربری</button>
     </div>
 
   </div>
@@ -510,7 +513,6 @@
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberMe').checked;
 
-    // نقشه کاربران سیستم برای تبدیل نام فارسی به ایمیل واقعی
     const userMapping = {
       'امین سعید': 'amin.saeed@simorgh.local',
       'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
@@ -544,6 +546,11 @@
       status.style.color = "var(--danger)"; status.innerText = "خطای ارتباط با سرور. اینترنت را چک کنید.";
     }
   });
+
+  async function handleLogout() {
+    await client.auth.signOut();
+    init();
+  }
 
   document.getElementById('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); init(); });
 
