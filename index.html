@@ -16,7 +16,6 @@
   <script src="https://cdn.jsdelivr.net/npm/kamadatepicker@1.5.3/src/kamadatepicker.min.js"></script>
 
   <style>
-    /* تنظیمات پایه */
     :root {
       --primary: #2563eb; --primary-hover: #1d4ed8;
       --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
@@ -83,7 +82,8 @@
       background: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; 
       border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-    .emp-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; }
+    .emp-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; flex-wrap: wrap; gap: 10px; }
+    .emp-info { flex: 1; min-width: 150px; }
     .emp-actions { display: flex; gap: 4px; }
     .card-actions { display: flex; justify-content: flex-end; margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 12px; }
     
@@ -110,6 +110,19 @@
     .legend-item { display: flex; align-items: center; gap: 5px; }
     .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
+    /* دکمه‌های فیلتر دسته‌بندی پرسنل */
+    .category-filters { 
+      display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .category-filters::-webkit-scrollbar { display: none; }
+    .filter-btn { 
+      white-space: nowrap; padding: 8px 14px; background: #e2e8f0; color: var(--text-muted); 
+      border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: none; cursor: pointer; transition: 0.2s;
+      margin-top: 0; width: auto; flex-shrink: 0;
+    }
+    .filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
+
     .bd-main { z-index: 9999 !important; direction: rtl; }
 
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 20px; }
@@ -133,6 +146,7 @@
 
 <div class="container">
   
+  <!-- صفحه ورود -->
   <div id="loginSection">
     <h2>🔐 ورود مدیر سیستم</h2>
     <form id="loginForm">
@@ -151,6 +165,7 @@
 
   <div id="appSection" class="hidden">
 
+    <!-- تب داشبورد -->
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
         <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
@@ -158,10 +173,19 @@
       </div>
       <h3 style="text-align: right; font-size: 1rem; margin-top: 20px;">خلاصه وضعیت سیستم</h3>
       <div class="detail-grid" id="dashboardStats"><div style="text-align: center; padding: 20px; color: var(--text-muted); grid-column: span 2;">در حال بارگذاری...</div></div>
-      <h3 style="text-align: right; font-size: 1rem; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">پرسنل در مرخصی (هم‌اکنون)</h3>
+      
+      <h3 style="text-align: right; font-size: 1rem; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+        پرسنل در مرخصی <span style="color:var(--primary);">(امروز)</span>
+      </h3>
       <div id="dashboardTodayLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
+
+      <h3 style="text-align: right; font-size: 1rem; margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+        برنامه‌ریزی مرخصی <span style="color:var(--warning);">(فردا)</span>
+      </h3>
+      <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
     </div>
 
+    <!-- تب وضعیت ماهانه -->
     <div id="tabMonthlyStatus" class="tab-content hidden">
       <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
       <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
@@ -175,6 +199,7 @@
       <div id="monthlyStatusList">در حال دریافت...</div>
     </div>
     
+    <!-- تب ثبت -->
     <div id="tabLeave" class="tab-content hidden">
       <div class="card" style="box-shadow: none; border:none; background: transparent;">
         <h2>📝 ثبت مرخصی جدید</h2>
@@ -188,16 +213,18 @@
           </div>
           <div class="form-group"><label>📌 نوع مرخصی:</label>
             <select id="recordType">
-              <option value="daily">مرخصی روزانه</option><option value="hourly">مرخصی ساعتی</option>
-              <option value="sick">استعلاجی</option><option value="official_holiday">تعطیل رسمی</option>
-              <option value="absence">غیبت</option>
+              <option value="مرخصی روزانه">مرخصی روزانه</option>
+              <option value="مرخصی ساعتی">مرخصی ساعتی</option>
+              <option value="استعلاجی">استعلاجی</option>
+              <option value="تعطیل رسمی">تعطیل رسمی</option>
+              <option value="غیبت">غیبت</option>
             </select>
           </div>
           
           <div class="form-group">
             <label>⏳ تاریخ و ساعت شروع:</label>
             <div class="date-time-group">
-              <input type="text" id="startDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+              <input type="text" id="startDateManual" required placeholder="انتخاب تاریخ" autocomplete="off" inputmode="numeric">
               <input type="time" id="startTimeManual" required>
             </div>
           </div>
@@ -205,9 +232,10 @@
           <div class="form-group">
             <label>⌛️ تاریخ و ساعت پایان:</label>
             <div class="date-time-group">
-              <input type="text" id="endDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+              <input type="text" id="endDateManual" placeholder="انتخاب تاریخ" autocomplete="off" inputmode="numeric">
               <input type="time" id="endTimeManual" required>
             </div>
+            <small style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی ساعتی، نیاز به پر کردن تاریخ پایان نیست.</small>
           </div>
           
           <div class="form-group"><label>💬 توضیحات (علت):</label><textarea id="note" rows="2" placeholder="توضیحات اختیاری..."></textarea></div>
@@ -217,6 +245,7 @@
       </div>
     </div>
 
+    <!-- تب گزارش -->
     <div id="tabRemaining" class="tab-content hidden">
       <h2>📊 گزارش باقی‌مانده</h2>
       <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
@@ -230,25 +259,52 @@
       <div id="remainingList">در حال دریافت...</div>
     </div>
 
+    <!-- تب پرسنل -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
       <div class="card">
         <form id="addEmployeeForm">
           <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="empPersonnelCode" placeholder="مثال: 101" inputmode="numeric"></div>
           <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="empFullName" required placeholder="مثال: رضا احمدی"></div>
-          <div class="form-group"><label>سمت سازمانی / شغل:</label><input type="text" id="empPosition" placeholder="مثال: انباردار"></div>
+          
+          <div class="form-group">
+            <label>محل کار / شغل:</label>
+            <select id="empPosition" required>
+              <option value="">انتخاب کنید...</option>
+              <option value="کارگر بسته بندی">کارگر بسته بندی</option>
+              <option value="کارگر تولید">کارگر تولید</option>
+              <option value="اداری و مدیریتی">اداری و مدیریتی</option>
+              <option value="فنی و برق">فنی و برق</option>
+              <option value="شیفت نگهبانی">شیفت نگهبانی</option>
+              <option value="سایر">سایر</option>
+            </select>
+          </div>
+          
           <button type="submit" class="btn-add-emp">ذخیره نیرو در سیستم</button>
         </form>
         <div id="empStatus" class="status"></div>
       </div>
+
       <h3 style="margin-top: 30px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
-      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('employeesManageList', this.value)">
+      
+      <!-- دکمه‌های فیلتر دسته‌بندی مشاغل -->
+      <div class="category-filters">
+        <button type="button" class="filter-btn active" onclick="filterByJob('all', this)">همه پرسنل</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('کارگر بسته بندی', this)">بسته بندی</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('کارگر تولید', this)">تولید</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('اداری و مدیریتی', this)">اداری</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('فنی و برق', this)">فنی</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('شیفت نگهبانی', this)">نگهبانی</button>
+      </div>
+
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="handleEmployeeSearch(this.value)">
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
+    <!-- تب سوابق -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
-      <input type="text" class="search-input" placeholder="جستجوی نام در سوابق..." oninput="filterDOM('recordsList', this.value)">
+      <input type="text" class="search-input" placeholder="جستجوی دقیق نام..." oninput="filterDOM('recordsList', this.value)">
       <div id="recordsList">در حال دریافت...</div>
       <button id="logoutBtn" class="btn-logout">خروج از حساب کاربری</button>
     </div>
@@ -257,7 +313,7 @@
 
 </div>
 
-<!-- مودال‌های ویرایش -->
+<!-- مودال ویرایش پرسنل -->
 <div id="editEmployeeModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header"><h3 style="margin:0;">✏️ ویرایش پرسنل</h3><button class="btn-close" onclick="closeEditEmployeeModal()">بستن ✕</button></div>
@@ -265,24 +321,44 @@
       <input type="hidden" id="editEmpId">
       <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="editEmpPersonnelCode" inputmode="numeric"></div>
       <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="editEmpFullName" required></div>
-      <div class="form-group"><label>سمت سازمانی / شغل:</label><input type="text" id="editEmpPosition"></div>
+      <div class="form-group">
+        <label>محل کار / شغل:</label>
+        <select id="editEmpPosition" required>
+          <option value="کارگر بسته بندی">کارگر بسته بندی</option>
+          <option value="کارگر تولید">کارگر تولید</option>
+          <option value="اداری و مدیریتی">اداری و مدیریتی</option>
+          <option value="فنی و برق">فنی و برق</option>
+          <option value="شیفت نگهبانی">شیفت نگهبانی</option>
+          <option value="سایر">سایر</option>
+        </select>
+      </div>
       <button type="submit">بروزرسانی مشخصات</button>
     </form>
     <div id="editEmpStatus" class="status"></div>
   </div>
 </div>
 
+<!-- مودال ویرایش رکورد مرخصی -->
 <div id="editRecordModal" class="modal hidden">
   <div class="modal-content">
-    <div class="modal-header"><h3 style="margin:0;">✏️ ویرایش رکورد</h3><button class="btn-close" onclick="closeEditRecordModal()">بستن ✕</button></div>
+    <div class="modal-header"><h3 style="margin:0;">✏️ ویرایش مرخصی</h3><button class="btn-close" onclick="closeEditRecordModal()">بستن ✕</button></div>
     <form id="editRecordForm">
       <input type="hidden" id="editRecordId">
-      <div class="form-group"><label>نوع رکورد:</label><select id="editRecordType" required><option value="daily">مرخصی روزانه</option><option value="hourly">مرخصی ساعتی</option><option value="sick">استعلاجی</option><option value="official_holiday">تعطیل رسمی</option><option value="absence">غیبت</option></select></div>
+      <div class="form-group">
+        <label>نوع رکورد:</label>
+        <select id="editRecordType" required>
+          <option value="مرخصی روزانه">مرخصی روزانه</option>
+          <option value="مرخصی ساعتی">مرخصی ساعتی</option>
+          <option value="استعلاجی">استعلاجی</option>
+          <option value="تعطیل رسمی">تعطیل رسمی</option>
+          <option value="غیبت">غیبت</option>
+        </select>
+      </div>
       
       <div class="form-group">
         <label>شروع:</label>
         <div class="date-time-group">
-          <input type="text" id="editStartDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+          <input type="text" id="editStartDateManual" required autocomplete="off" inputmode="numeric">
           <input type="time" id="editStartTimeManual" required>
         </div>
       </div>
@@ -290,13 +366,14 @@
       <div class="form-group">
         <label>پایان:</label>
         <div class="date-time-group">
-          <input type="text" id="editEndDateManual" required placeholder="1403/01/15" autocomplete="off" inputmode="numeric">
+          <input type="text" id="editEndDateManual" autocomplete="off" inputmode="numeric">
           <input type="time" id="editEndTimeManual" required>
         </div>
+        <small style="color:var(--text-muted); display:block; margin-top:4px;">در صورت خالی بودن، تاریخ شروع در نظر گرفته می‌شود.</small>
       </div>
       
       <div class="form-group"><label>توضیحات (علت):</label><textarea id="editNote" rows="2"></textarea></div>
-      <button type="submit">بروزرسانی رکورد</button>
+      <button type="submit">ذخیره تغییرات</button>
     </form>
     <div id="editRecordStatus" class="status"></div>
   </div>
@@ -316,6 +393,7 @@
   const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // لود اطلاعات لاگین
   window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('rememberMe') === 'true') {
       document.getElementById('loginEmail').value = localStorage.getItem('savedEmail') || '';
@@ -335,64 +413,44 @@
       localStorage.setItem('savedEmail', email);
       localStorage.setItem('savedPassword', password);
     } else {
-      localStorage.removeItem('rememberMe');
-      localStorage.removeItem('savedEmail');
-      localStorage.removeItem('savedPassword');
+      localStorage.removeItem('rememberMe'); localStorage.removeItem('savedEmail'); localStorage.removeItem('savedPassword');
     }
 
     const status = document.getElementById('loginStatus'); 
     status.innerText = "در حال ورود به سیستم...";
-    
     try {
       const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) { 
-        status.style.color = "var(--danger)"; 
-        status.innerText = "خطا: " + error.message; 
-      } else {
-        init();
-      }
+      if (error) { status.style.color = "var(--danger)"; status.innerText = "خطا: " + error.message; } else { init(); }
     } catch(err) {
-      status.style.color = "var(--danger)"; 
-      status.innerText = "خطای ارتباط با سرور. وضعیت اینترنت را چک کنید.";
+      status.style.color = "var(--danger)"; status.innerText = "خطای ارتباط با سرور. اینترنت را چک کنید.";
     }
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', async () => { 
-    await client.auth.signOut(); 
-    init(); 
-  });
+  document.getElementById('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); init(); });
 
   try {
     const datePickerOptions = {
-      placeholder: "مثال: 1403/01/15",
-      twodigit: true,
-      closeAfterSelect: true,
-      nextButtonIcon: "fa fa-arrow-right",
-      previousButtonIcon: "fa fa-arrow-left",
-      buttonsColor: "blue",
-      forceFarsiDigits: true,
-      markToday: true,
-      markHolidays: true,
-      highlightSelectedDay: true,
-      sync: true
+      placeholder: "انتخاب تاریخ", twodigit: true, closeAfterSelect: true,
+      nextButtonIcon: "fa fa-arrow-right", previousButtonIcon: "fa fa-arrow-left",
+      buttonsColor: "blue", forceFarsiDigits: true, markToday: true, markHolidays: true,
+      highlightSelectedDay: true, sync: true
     };
-    kamaDatepicker('startDateManual', datePickerOptions);
-    kamaDatepicker('endDateManual', datePickerOptions);
-    kamaDatepicker('editStartDateManual', datePickerOptions);
-    kamaDatepicker('editEndDateManual', datePickerOptions);
-  } catch (err) {
-    console.warn('تقویم شمسی لود نشد، فیلدها به صورت دستی قابل تایپ هستند.', err);
-  }
+    kamaDatepicker('startDateManual', datePickerOptions); kamaDatepicker('endDateManual', datePickerOptions);
+    kamaDatepicker('editStartDateManual', datePickerOptions); kamaDatepicker('editEndDateManual', datePickerOptions);
+  } catch (err) {}
 
   const WORK_DAY_MINUTES = 7 * 60 + 20; 
   const TOTAL_ANNUAL_DAYS = 26;
   const TOTAL_ANNUAL_MINUTES = TOTAL_ANNUAL_DAYS * WORK_DAY_MINUTES;
 
   let allEmployeesData = [];
+  window.currentJobFilter = 'all';
+  window.currentSearchQuery = '';
 
+  // تصحیح مپینگ برای جلوگیری از نمایش کلمات انگلیسی در UI
   const TYPE_LABELS = {
     'daily': 'مرخصی روزانه', 'hourly': 'مرخصی ساعتی', 'sick': 'استعلاجی', 'official_holiday': 'تعطیل رسمی', 'absence': 'غیبت',
-    'مرخصی روزانه': 'daily', 'مرخصی ساعتی': 'hourly', 'استعلاجی': 'sick', 'تعطیل رسمی': 'official_holiday', 'غیبت': 'absence'
+    'مرخصی روزانه': 'مرخصی روزانه', 'مرخصی ساعتی': 'مرخصی ساعتی', 'استعلاجی': 'استعلاجی', 'تعطیل رسمی': 'تعطیل رسمی', 'غیبت': 'غیبت'
   };
 
   function switchTab(tabId, btn) {
@@ -403,6 +461,7 @@
 
     document.querySelectorAll('.search-input').forEach(input => { input.value = ''; });
     if(tabId === 'tabLeave') filterLeaveSelect('');
+    if(tabId === 'tabEmployees') { window.currentSearchQuery = ''; applyEmployeeFilters(); }
 
     if(tabId === 'tabRecords') loadRecords();
     else if(tabId === 'tabRemaining') loadRemainingLeave();
@@ -410,13 +469,41 @@
     else if(tabId === 'tabMonthlyStatus') loadMonthlyStatus();
   }
 
+  // سرچ هوشمند فقط بر اساس نام شخص
   function filterDOM(containerId, query) {
     const filter = query.toLowerCase();
-    const container = document.getElementById(containerId);
-    const items = container.querySelectorAll('.leave-summary-card, .emp-item, .card');
+    const items = document.getElementById(containerId).querySelectorAll('.leave-summary-card, .emp-item, .card');
     items.forEach(item => {
-      if (item.innerText.toLowerCase().includes(filter)) { item.style.display = ""; } 
-      else { item.style.display = "none"; }
+      const name = item.getAttribute('data-name') || item.innerText;
+      item.style.display = name.toLowerCase().includes(filter) ? "" : "none";
+    });
+  }
+
+  // فیلترهای دسته‌بندی مشاغل
+  function filterByJob(jobCategory, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    window.currentJobFilter = jobCategory;
+    applyEmployeeFilters();
+  }
+
+  function handleEmployeeSearch(query) {
+    window.currentSearchQuery = query;
+    applyEmployeeFilters();
+  }
+
+  function applyEmployeeFilters() {
+    const filter = (window.currentSearchQuery || '').toLowerCase();
+    const jobFilter = window.currentJobFilter;
+    
+    document.querySelectorAll('#employeesManageList .emp-item').forEach(item => {
+      const name = (item.getAttribute('data-name') || '').toLowerCase();
+      const itemJob = item.getAttribute('data-job') || 'سایر';
+      
+      const matchesSearch = name.includes(filter);
+      const matchesJob = (jobFilter === 'all') || (itemJob === jobFilter);
+      
+      item.style.display = (matchesSearch && matchesJob) ? "flex" : "none";
     });
   }
 
@@ -426,19 +513,17 @@
     const filtered = allEmployeesData.filter(e => e.full_name.toLowerCase().includes(q) || (e.personnel_code && e.personnel_code.includes(q)));
     if (filtered.length > 0) {
       select.innerHTML = `<option value="">انتخاب کنید...</option>` + filtered.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
-    } else {
-      select.innerHTML = `<option value="">نتیجه‌ای یافت نشد</option>`;
-    }
+    } else { select.innerHTML = `<option value="">نتیجه‌ای یافت نشد</option>`; }
   }
 
   async function exportRemainingCSV() {
-    alert('در حال آماده‌سازی فایل اکسل، لطفاً چند ثانیه صبر کنید...');
+    alert('در حال آماده‌سازی فایل اکسل...');
     const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
     if (!employees || employees.length === 0) return;
 
     let csvContent = '\uFEFF';
-    csvContent += "کد پرسنلی,نام و نام خانوادگی,سمت,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,مانده مرخصی (روز),مانده مرخصی (ساعت)\n";
+    csvContent += "کد پرسنلی,نام و نام خانوادگی,محل کار,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,مانده (روز),مانده (ساعت)\n";
 
     employees.forEach(emp => {
       const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
@@ -461,7 +546,7 @@
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a"); const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url); link.setAttribute("download", "گزارش_مرخصی_سیمرغ.csv");
+    link.setAttribute("href", url); link.setAttribute("download", "گزارش_مرخصی.csv");
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
@@ -515,22 +600,38 @@
     return new Date(gDate.gy, gDate.gm - 1, gDate.gd, hour, minute, 0);
   }
 
+  // --- سیستم داشبورد و جداسازی امروز و فردا ---
   async function loadDashboard() {
     const containerStats = document.getElementById('dashboardStats');
     const containerToday = document.getElementById('dashboardTodayLeave');
+    const containerTomorrow = document.getElementById('dashboardTomorrowLeave');
+    
     const { data: employees } = await client.from('employees').select('id, full_name, position');
     const { data: records } = await client.from('leave_records').select('*, employees(full_name, position)');
     
-    const now = new Date(); let onLeaveHtml = ''; let activeRecords = [];
-
     if (records) {
-      activeRecords = records.filter(r => { return now >= new Date(r.start_at) && now <= new Date(r.end_at); });
-      if (activeRecords.length > 0) {
-        onLeaveHtml = activeRecords.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fee2e2; color:var(--danger); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
-      } else onLeaveHtml = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
+      const today = new Date();
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      
+      const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
+      const endOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 23, 59, 59);
+
+      const activeToday = records.filter(r => new Date(r.start_at) <= endOfToday && new Date(r.end_at) >= startOfToday);
+      const activeTomorrow = records.filter(r => new Date(r.start_at) <= endOfTomorrow && new Date(r.end_at) >= startOfTomorrow);
+      
+      // نمایش امروز
+      if (activeToday.length > 0) {
+        containerToday.innerHTML = activeToday.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fee2e2; color:var(--danger); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
+      } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
+      
+      // نمایش فردا
+      if (activeTomorrow.length > 0) {
+        containerTomorrow.innerHTML = activeTomorrow.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fffbeb; color:var(--warning); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
+      } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
+      
+      containerStats.innerHTML = `<div class="detail-item info" style="text-align:center;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--primary);">${employees ? employees.length : 0}</span><strong>کل پرسنل</strong></div><div class="detail-item warning" style="text-align:center;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span><strong>کل سوابق</strong></div><div class="detail-item danger" style="text-align:center; grid-column: span 2;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--danger);">${activeToday.length}</span><strong>در مرخصی لحظه‌ای</strong></div>`;
     }
-    containerStats.innerHTML = `<div class="detail-item info" style="text-align:center;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--primary);">${employees ? employees.length : 0}</span><strong>کل پرسنل</strong></div><div class="detail-item warning" style="text-align:center;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--warning);">${records ? records.length : 0}</span><strong>کل سوابق</strong></div><div class="detail-item danger" style="text-align:center; grid-column: span 2;"><span style="font-size: 1.8rem; display:block; font-weight:bold; color:var(--danger);">${activeRecords.length}</span><strong>در مرخصی لحظه‌ای</strong></div>`;
-    containerToday.innerHTML = onLeaveHtml;
   }
 
   async function loadMonthlyStatus() {
@@ -538,8 +639,7 @@
     container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
     const { data: employees } = await client.from('employees').select('id, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
-
-    if (!employees || employees.length === 0) { container.innerHTML = "<p style='text-align:center;'>پرسنلی ثبت نشده.</p>"; return; }
+    if (!employees || employees.length === 0) return;
 
     const today = new Date();
     const currentShamsi = gregorianToShamsi(today.getFullYear(), today.getMonth() + 1, today.getDate());
@@ -569,40 +669,19 @@
           boxesHtml += `<div class="status-box ${colorClass}">✔</div>`;
         } else boxesHtml += `<div class="status-box empty"></div>`;
       }
-      html += `<div class="emp-item"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${emp.position || 'بدون سمت'}</div></div><div class="boxes-container">${boxesHtml}</div></div>`;
+      html += `<div class="emp-item" data-name="${emp.full_name}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${emp.position || 'سایر'}</div></div><div class="boxes-container">${boxesHtml}</div></div>`;
     });
     container.innerHTML = html;
   }
 
-  // --- مدیریت خطاهای ثبت کارمند ---
+  // --- سیستم پرسنل ---
   document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const statusDiv = document.getElementById('empStatus');
-    statusDiv.innerText = "در حال ثبت...";
-    statusDiv.style.color = "var(--text-muted)";
-
     let pCode = document.getElementById('empPersonnelCode').value.trim();
-    if (pCode === "") pCode = null; // حل مشکل ارور فیلد خالی تکراری
-
-    const { error } = await client.from('employees').insert([{ 
-      personnel_code: pCode, 
-      full_name: document.getElementById('empFullName').value, 
-      position: document.getElementById('empPosition').value 
-    }]);
-    
-    if (!error) { 
-      document.getElementById('addEmployeeForm').reset(); 
-      statusDiv.innerText = "نیرو با موفقیت اضافه شد!";
-      statusDiv.style.color = "var(--success)";
-      loadEmployeesList(); 
-      setTimeout(() => { statusDiv.innerText = ""; }, 3000);
-    } else {
-      statusDiv.innerText = "خطا در ثبت: " + error.message;
-      statusDiv.style.color = "var(--danger)";
-      if(error.message.includes('duplicate')) {
-         statusDiv.innerText = "خطا: این شماره پرسنلی قبلاً برای شخص دیگری ثبت شده است.";
-      }
-    }
+    if (pCode === "") pCode = null;
+    const { error } = await client.from('employees').insert([{ personnel_code: pCode, full_name: document.getElementById('empFullName').value, position: document.getElementById('empPosition').value }]);
+    if (!error) { document.getElementById('addEmployeeForm').reset(); loadEmployeesList(); }
+    else alert("خطا: " + error.message);
   });
 
   async function loadEmployeesList() {
@@ -611,79 +690,106 @@
     if (data && data.length > 0) {
       allEmployeesData = data;
       select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
-      manageList.innerHTML = data.map(e => `<div class="emp-item"><span><strong>${e.full_name}</strong> <small style="color:var(--text-muted)">(${e.position || ''})</small></span><div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div></div>`).join('');
+      manageList.innerHTML = data.map(e => `<div class="emp-item" data-name="${e.full_name}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div><div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div></div>`).join('');
     } else {
       allEmployeesData = []; select.innerHTML = `<option value="">بدون پرسنل</option>`; manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
     }
   }
 
   function openEditEmployeeModal(id, code, name, pos) {
-    document.getElementById('editEmpId').value = id; document.getElementById('editEmpPersonnelCode').value = code==='null'?'':code; document.getElementById('editEmpFullName').value = name; document.getElementById('editEmpPosition').value = pos==='null'?'':pos;
+    document.getElementById('editEmpId').value = id; document.getElementById('editEmpPersonnelCode').value = code==='null'?'':code; document.getElementById('editEmpFullName').value = name; 
+    const posSelect = document.getElementById('editEmpPosition');
+    let posExists = Array.from(posSelect.options).some(opt => opt.value === pos);
+    posSelect.value = posExists ? pos : 'سایر';
     document.getElementById('editEmployeeModal').classList.remove('hidden');
   }
   function closeEditEmployeeModal() { document.getElementById('editEmployeeModal').classList.add('hidden'); }
 
-  // --- مدیریت خطاهای ویرایش کارمند ---
   document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const statusDiv = document.getElementById('editEmpStatus');
-    statusDiv.innerText = "در حال بروزرسانی...";
-    statusDiv.style.color = "var(--text-muted)";
-
     let pCode = document.getElementById('editEmpPersonnelCode').value.trim();
     if (pCode === "") pCode = null;
-
-    const { error } = await client.from('employees').update({ 
-      personnel_code: pCode, 
-      full_name: document.getElementById('editEmpFullName').value, 
-      position: document.getElementById('editEmpPosition').value 
-    }).eq('id', document.getElementById('editEmpId').value);
-    
-    if (!error) {
-      closeEditEmployeeModal(); 
-      loadEmployeesList();
-      statusDiv.innerText = "";
-    } else {
-      statusDiv.innerText = "خطا: " + error.message;
-      statusDiv.style.color = "var(--danger)";
-      if(error.message.includes('duplicate')) {
-         statusDiv.innerText = "خطا: این شماره پرسنلی قبلاً ثبت شده است.";
-      }
-    }
+    await client.from('employees').update({ personnel_code: pCode, full_name: document.getElementById('editEmpFullName').value, position: document.getElementById('editEmpPosition').value }).eq('id', document.getElementById('editEmpId').value);
+    closeEditEmployeeModal(); loadEmployeesList();
   });
 
   async function deleteEmployee(id, name) {
     if (confirm(`حذف ${name} و سوابقش؟`)) { await client.from('leave_records').delete().eq('employee_id', id); await client.from('employees').delete().eq('id', id); loadEmployeesList(); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); }
   }
 
+  // --- سیستم ثبت و ویرایش مرخصی ---
   document.getElementById('leaveForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('leaveStatus');
     const { data: { user } } = await client.auth.getUser();
+    
+    // کپی کردن خودکار تاریخ برای مرخصی ساعتی یا جاافتاده
+    if (!document.getElementById('endDateManual').value) {
+        document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
+    }
+
     const startObj = parseManualInputToDate('startDateManual', 'startTimeManual');
     const endObj = parseManualInputToDate('endDateManual', 'endTimeManual');
     
     if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است."; return; }
-    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "پایان باید بعد از شروع باشد."; return; }
+    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
 
     const { error } = await client.from('leave_records').insert([{ employee_id: document.getElementById('employeeSelect').value, record_type: document.getElementById('recordType').value, start_at: startObj.toISOString(), end_at: endObj.toISOString(), note: document.getElementById('note').value, created_by: user.id }]);
     if (!error) { status.style.color = "var(--success)"; status.innerText = "ثبت شد!"; document.getElementById('note').value = ''; loadDashboard(); loadMonthlyStatus(); }
+    else { status.style.color = "var(--danger)"; status.innerText = "خطا در ثبت: " + error.message; }
   });
 
-  function formatHoursAndMinutes(totalMinutes) {
-    if (!totalMinutes || totalMinutes <= 0) return '۰ ساعت و ۰ دقیقه';
-    const hours = Math.floor(totalMinutes / 60); const mins = Math.floor(totalMinutes % 60);
-    let parts = []; if (hours > 0) parts.push(`${hours} ساعت`); if (mins > 0) parts.push(`${mins} دقیقه`);
-    return parts.length > 0 ? parts.join(' و ') : '۰ دقیقه';
+  // توابع ویرایش مرخصی
+  function openEditRecordModal(id, type, start, end, note) {
+    document.getElementById('editRecordId').value = id;
+    document.getElementById('editRecordType').value = type;
+    
+    const sd = new Date(start); const ed = new Date(end);
+    const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
+    const eShamsi = gregorianToShamsi(ed.getFullYear(), ed.getMonth()+1, ed.getDate());
+    
+    document.getElementById('editStartDateManual').value = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`;
+    document.getElementById('editStartTimeManual').value = String(sd.getHours()).padStart(2,'0') + ':' + String(sd.getMinutes()).padStart(2,'0');
+    document.getElementById('editEndDateManual').value = `${eShamsi.year}/${eShamsi.month}/${eShamsi.day}`;
+    document.getElementById('editEndTimeManual').value = String(ed.getHours()).padStart(2,'0') + ':' + String(ed.getMinutes()).padStart(2,'0');
+    document.getElementById('editNote').value = (note && note !== 'null') ? note : '';
+    
+    document.getElementById('editRecordModal').classList.remove('hidden');
   }
 
-  function formatWorkDaysAndHours(totalMinutes) {
-    if (!totalMinutes || totalMinutes <= 0) return { daysText: '۰ روز کاری', totalHoursText: '۰ ساعت و ۰ دقیقه' };
-    const days = Math.floor(totalMinutes / WORK_DAY_MINUTES); const remMinutesAfterDays = totalMinutes % WORK_DAY_MINUTES;
-    const remHours = Math.floor(remMinutesAfterDays / 60); const remMins = Math.floor(remMinutesAfterDays % 60);
-    let dayParts = []; if (days > 0) dayParts.push(`${days} روز`); if (remHours > 0) dayParts.push(`${remHours} ساعت`); if (remMins > 0) dayParts.push(`${remMins} دقیقه`);
-    return { daysText: dayParts.length > 0 ? dayParts.join(' و ') : '۰ روز', totalHoursText: formatHoursAndMinutes(totalMinutes) };
-  }
+  function closeEditRecordModal() { document.getElementById('editRecordModal').classList.add('hidden'); }
+
+  document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('editRecordStatus');
+    status.innerText = "در حال ذخیره...";
+    
+    // کپی کردن خودکار تاریخ برای ویرایش
+    if (!document.getElementById('editEndDateManual').value) {
+        document.getElementById('editEndDateManual').value = document.getElementById('editStartDateManual').value;
+    }
+
+    const startObj = parseManualInputToDate('editStartDateManual', 'editStartTimeManual');
+    const endObj = parseManualInputToDate('editEndDateManual', 'editEndTimeManual');
+    
+    if (!startObj || !endObj) { status.innerText = "فرمت تاریخ یا ساعت اشتباه است."; return; }
+    if (endObj <= startObj) { status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
+    
+    const { error } = await client.from('leave_records').update({
+      record_type: document.getElementById('editRecordType').value,
+      start_at: startObj.toISOString(),
+      end_at: endObj.toISOString(),
+      note: document.getElementById('editNote').value
+    }).eq('id', document.getElementById('editRecordId').value);
+    
+    if (!error) { 
+        closeEditRecordModal(); 
+        loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave();
+        status.innerText = "";
+    } else {
+        status.innerText = "خطا در ویرایش: " + error.message;
+    }
+  });
 
   async function loadRemainingLeave() {
     const container = document.getElementById('remainingList');
@@ -704,7 +810,7 @@
         }
       });
       const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
-      return `<div class="leave-summary-card"><div class="leave-summary-header"><strong>${emp.full_name}</strong><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
+      return `<div class="leave-summary-card" data-name="${emp.full_name}"><div class="leave-summary-header"><strong>${emp.full_name}</strong><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
       <div class="detail-grid"><div class="detail-item"><strong>روزانه:</strong><br>${formatWorkDaysAndHours(dM).daysText}</div><div class="detail-item"><strong>ساعتی:</strong><br>${formatHoursAndMinutes(hM)}</div><div class="detail-item warning"><strong>استعلاجی:</strong><br>${formatWorkDaysAndHours(sM).daysText}</div><div class="detail-item danger"><strong>غیبت:</strong><br>${formatWorkDaysAndHours(aM).daysText}</div></div></div>`;
     }).join('');
   }
@@ -713,11 +819,29 @@
     const list = document.getElementById('recordsList');
     const { data } = await client.from('leave_records').select('*, employees(full_name)').order('created_at', { ascending: false });
     if(data) {
-      list.innerHTML = data.map(r => `<div class="card"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${r.note || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`).join('');
+      list.innerHTML = data.map(r => {
+        const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
+        return `<div class="card" data-name="${r.employees?r.employees.full_name:''}"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`;
+      }).join('');
     }
   }
 
-  async function deleteRecord(id) { if(confirm("حذف رکورد؟")) { await client.from('leave_records').delete().eq('id', id); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); } }
+  async function deleteRecord(id) { if(confirm("حذف رکورد مرخصی تایید شود؟")) { await client.from('leave_records').delete().eq('id', id); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); } }
+
+  function formatHoursAndMinutes(totalMinutes) {
+    if (!totalMinutes || totalMinutes <= 0) return '۰ ساعت و ۰ دقیقه';
+    const hours = Math.floor(totalMinutes / 60); const mins = Math.floor(totalMinutes % 60);
+    let parts = []; if (hours > 0) parts.push(`${hours} ساعت`); if (mins > 0) parts.push(`${mins} دقیقه`);
+    return parts.length > 0 ? parts.join(' و ') : '۰ دقیقه';
+  }
+
+  function formatWorkDaysAndHours(totalMinutes) {
+    if (!totalMinutes || totalMinutes <= 0) return { daysText: '۰ روز کاری', totalHoursText: '۰ ساعت و ۰ دقیقه' };
+    const days = Math.floor(totalMinutes / WORK_DAY_MINUTES); const remMinutesAfterDays = totalMinutes % WORK_DAY_MINUTES;
+    const remHours = Math.floor(remMinutesAfterDays / 60); const remMins = Math.floor(remMinutesAfterDays % 60);
+    let dayParts = []; if (days > 0) dayParts.push(`${days} روز`); if (remHours > 0) dayParts.push(`${remHours} ساعت`); if (remMins > 0) dayParts.push(`${remMins} دقیقه`);
+    return { daysText: dayParts.length > 0 ? dayParts.join(' و ') : '۰ روز', totalHoursText: formatHoursAndMinutes(totalMinutes) };
+  }
 
   init();
 </script>
