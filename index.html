@@ -340,7 +340,7 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق با فیلتر تاریخ و دکمه دانلود اکسل سوابق -->
+    <!-- تب سوابق با مرتب‌سازی بر اساس تاریخ شروع -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
       
@@ -690,7 +690,6 @@
     }
   }
 
-  // خروجی اکسل برای سوابق ثبت‌شده (فقط موارد قابل مشاهده در صفحه)
   function exportFilteredRecordsCSV() {
     const listContainer = document.getElementById('recordsList');
     const visibleCards = Array.from(listContainer.querySelectorAll('.card')).filter(c => c.style.display !== 'none');
@@ -701,13 +700,10 @@
     }
 
     let csvContent = '\uFEFF';
-    csvContent += "نام پرسنل,کد پرسنلی,نوع مرخصی,تاریخ و ساعت شروع,تاریخ و ساعت پایان,توضیحات\n";
+    csvContent += "نام پرسنل,نوع مرخصی,تاریخ و ساعت شروع,تاریخ و ساعت پایان\n";
 
     visibleCards.forEach(card => {
-      const text = card.innerText;
-      // استخراج اطلاعات از کارت به صورت امن
       const strongEl = card.querySelector('strong');
-      const smallEl = card.querySelector('small');
       const badgeEl = card.querySelector('.record-type-badge');
       const name = strongEl ? strongEl.innerText.trim() : '';
       const type = badgeEl ? badgeEl.innerText.trim() : '';
@@ -716,7 +712,7 @@
       const start = spans.length > 0 ? spans[0].innerText : '';
       const end = spans.length > 1 ? spans[1].innerText : '';
       
-      csvContent += `"${name}","","${type}","${start}","${end}",""\n`;
+      csvContent += `"${name}","${type}","${start}","${end}"\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1204,7 +1200,8 @@
 
   async function loadRecords() {
     const list = document.getElementById('recordsList');
-    const { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name)').order('created_at', { ascending: false });
+    // مرتب‌سازی رکوردها بر اساس تاریخ شروع (از جدیدترین به قدیمی‌ترین)
+    const { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name)').order('start_at', { ascending: false });
     if(data) {
       let html = data.map(r => {
         const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
