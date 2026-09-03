@@ -46,9 +46,10 @@
     }
     .app-logo {
       width: 70px; height: 70px; object-fit: contain; background: white;
-      border-radius: 50%; padding: 6px; margin-bottom: 10px; display: flex;
+      border-radius: 50%; padding: 6px; margin-bottom: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex;
       justify-content: center; align-items: center; margin-left: auto; margin-right: auto;
-      font-size: 35px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      font-size: 35px;
     }
     .dashboard-header h2 { margin: 0; font-size: 1.15rem; color: white; line-height: 1.6; }
     .dashboard-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
@@ -1220,7 +1221,7 @@
       case 'daily_leave': case 'daily': return 'badge-blue';
       case 'hourly_leave': return 'badge-green';
       case 'sick_leave': return 'badge-orange';
-      case 'official_holiday': return 'badge-black';
+      case 'official_holiday': case 'badge-black';
       case 'absence': return 'badge-red';
       default: return 'badge-blue';
     }
