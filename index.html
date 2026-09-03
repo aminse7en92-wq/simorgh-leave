@@ -99,6 +99,16 @@
     .badge { display: inline-block; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; background: #dcfce7; color: #166534; text-align: center; }
     .badge small { display: block; font-size: 0.75rem; font-weight: normal; margin-top: 2px; }
     
+    /* استایل مستطیل رنگی درشت برای نوع مرخصی در سوابق */
+    .record-type-badge {
+      display: inline-block; padding: 5px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: white; margin-right: 8px;
+    }
+    .badge-blue { background: var(--primary); }
+    .badge-green { background: var(--success); }
+    .badge-orange { background: var(--warning); }
+    .badge-black { background: var(--black-accent); }
+    .badge-red { background: var(--danger); }
+
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 0.85rem; }
     .detail-item { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.6; }
     .detail-item small { display: block; color: var(--text-muted); font-size: 0.75rem; }
@@ -209,7 +219,7 @@
         <form id="leaveForm">
           <div class="form-group">
             <label>👤 انتخاب فرد:</label>
-            <input type="text" class="search-input" placeholder="جستجوی نام نیرو..." oninput="filterLeaveSelect(this.value)" style="margin-bottom: 8px;">
+            <input type="text" class="search-input" placeholder="جستجوی نام یا شماره پرسنلی..." oninput="filterLeaveSelect(this.value)" style="margin-bottom: 8px;">
             <select id="employeeSelect" required>
               <option value="">در حال دریافت...</option>
             </select>
@@ -227,7 +237,7 @@
           <div class="form-group">
             <label>⏳ تاریخ شروع:</label>
             <div class="date-time-group">
-              <input type="text" id="startDateManual" required placeholder="1403/06/12" autocomplete="off" autocapitalize="off" spellcheck="false">
+              <input type="text" id="startDateManual" required placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
               <input type="time" id="startTimeManual" required>
             </div>
           </div>
@@ -235,7 +245,7 @@
           <div class="form-group">
             <label>⌛️ تاریخ پایان:</label>
             <div class="date-time-group">
-              <input type="text" id="endDateManual" placeholder="1403/06/12" autocomplete="off" autocapitalize="off" spellcheck="false">
+              <input type="text" id="endDateManual" placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
               <input type="time" id="endTimeManual" required>
             </div>
             <small style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی ساعتی، نیاز به پر کردن تاریخ پایان نیست.</small>
@@ -267,6 +277,7 @@
       <div id="remainingList"></div>
     </div>
 
+    <!-- تب پرسنل -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
       <div class="card">
@@ -327,7 +338,7 @@
         <button type="button" class="month-btn" onclick="filterByMonth('08', this)">آبان</button>
       </div>
 
-      <input type="text" class="search-input" placeholder="جستجوی نام یا تاریخ (مثال: 1403/05/12)..." oninput="filterRecords(this.value)">
+      <input type="text" class="search-input" placeholder="جستجوی نام، شماره پرسنلی یا تاریخ..." oninput="filterRecords(this.value)">
       <div id="recordsList">در حال دریافت...</div>
       <button id="logoutBtn" class="btn-logout">خروج از حساب کاربری</button>
     </div>
@@ -383,7 +394,7 @@
       <div class="form-group">
         <label>شروع:</label>
         <div class="date-time-group">
-          <input type="text" id="editStartDateManual" required placeholder="1403/06/12" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <input type="text" id="editStartDateManual" required placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
           <input type="time" id="editStartTimeManual" required>
         </div>
       </div>
@@ -391,7 +402,7 @@
       <div class="form-group">
         <label>پایان:</label>
         <div class="date-time-group">
-          <input type="text" id="editEndDateManual" placeholder="1403/06/12" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <input type="text" id="editEndDateManual" placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
           <input type="time" id="editEndTimeManual" required>
         </div>
         <small style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی ساعتی، نیاز به پر کردن تاریخ پایان نیست.</small>
@@ -429,15 +440,13 @@
       .trim();
   }
 
-  // سیستم مدیریت هوشمند و آزاد تاریخ برای آیفون و اندروید
   const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
       el.addEventListener('input', function(e) {
-        let v = toEnglishDigits(e.target.value).replace(/\D/g, ''); // فقط اعداد
-        if (v.length > 8) v = v.substring(0, 8); // حداکثر 8 رقم (سال، ماه، روز)
-        
+        let v = toEnglishDigits(e.target.value).replace(/\D/g, '');
+        if (v.length > 8) v = v.substring(0, 8);
         let formatted = '';
         if (v.length > 4) {
           formatted = v.substring(0, 4) + '/' + v.substring(4, 6);
@@ -673,6 +682,7 @@
     });
   }
 
+  // نمایش شماره پرسنلی همراه با نام در منوی انتخاب ثبت مرخصی
   function filterLeaveSelect(query) {
     const filter = normalizeText(query);
     const terms = filter.split(' ').filter(t => t !== '');
@@ -688,7 +698,10 @@
     }
 
     if (filtered.length > 0) {
-      select.innerHTML = `<option value="">انتخاب کنید...</option>` + filtered.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
+      select.innerHTML = `<option value="">انتخاب کنید...</option>` + filtered.map(e => {
+        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+        return `<option value="${e.id}">${e.full_name}${codeText}</option>`;
+      }).join('');
     } else { 
       select.innerHTML = `<option value="">نتیجه‌ای یافت نشد</option>`; 
     }
@@ -786,8 +799,8 @@
     const containerToday = document.getElementById('dashboardTodayLeave');
     const containerTomorrow = document.getElementById('dashboardTomorrowLeave');
     
-    const { data: employees } = await client.from('employees').select('id, full_name, position');
-    const { data: records } = await client.from('leave_records').select('*, employees(full_name, position)');
+    const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    const { data: records } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)');
     
     if (records) {
       const today = new Date();
@@ -804,11 +817,21 @@
       activeTomorrow.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
 
       if (activeToday.length > 0) {
-        containerToday.innerHTML = activeToday.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fee2e2; color:var(--danger); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
+        containerToday.innerHTML = activeToday.map(r => {
+          const emp = r.employees;
+          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+          const badgeClass = getBadgeClass(r.record_type);
+          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
+        }).join('');
       } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
       
       if (activeTomorrow.length > 0) {
-        containerTomorrow.innerHTML = activeTomorrow.map(r => `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${r.employees ? r.employees.full_name : 'نامشخص'}</strong><br><small style="color:var(--text-muted);">${r.employees && r.employees.position ? r.employees.position : ''}</small></span><span class="badge" style="background:#fffbeb; color:var(--warning); font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`).join('');
+        containerTomorrow.innerHTML = activeTomorrow.map(r => {
+          const emp = r.employees;
+          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+          const badgeClass = getBadgeClass(r.record_type);
+          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
+        }).join('');
       } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
       
       containerStats.innerHTML = `
@@ -835,7 +858,7 @@
   async function loadMonthlyStatus() {
     const container = document.getElementById('monthlyStatusList');
     container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
-    const { data: employees } = await client.from('employees').select('id, full_name, position');
+    const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
     if (!employees || employees.length === 0) return;
 
@@ -869,7 +892,8 @@
           boxesHtml += `<div class="status-box ${colorClass}">✔</div>`;
         } else boxesHtml += `<div class="status-box empty"></div>`;
       }
-      html += `<div class="emp-item" data-name="${emp.full_name}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${emp.position || 'سایر'}</div></div><div class="boxes-container">${boxesHtml}</div></div>`;
+      const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+      html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted);">${emp.position || 'سایر'}</div></div><div class="boxes-container">${boxesHtml}</div></div>`;
     });
     container.innerHTML = html;
   }
@@ -890,8 +914,15 @@
       data.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
       allEmployeesData = data;
       
-      select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
-      manageList.innerHTML = data.map(e => `<div class="emp-item" data-name="${e.full_name}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div><div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div></div>`).join('');
+      select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => {
+        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+        return `<option value="${e.id}">${e.full_name}${codeText}</option>`;
+      }).join('');
+      
+      manageList.innerHTML = data.map(e => {
+        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+        return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div><div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div></div>`;
+      }).join('');
     } else {
       allEmployeesData = []; select.innerHTML = `<option value="">بدون پرسنل</option>`; manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
     }
@@ -988,6 +1019,17 @@
     }
   });
 
+  function getBadgeClass(type) {
+    switch(type) {
+      case 'daily_leave': case 'daily': return 'badge-blue';
+      case 'hourly_leave': return 'badge-green';
+      case 'sick_leave': return 'badge-orange';
+      case 'official_holiday': return 'badge-black';
+      case 'absence': return 'badge-red';
+      default: return 'badge-blue';
+    }
+  }
+
   async function loadRemainingLeave() {
     const container = document.getElementById('remainingList');
     const { data: employees } = await client.from('employees').select('*'); const { data: records } = await client.from('leave_records').select('*');
@@ -1009,9 +1051,10 @@
         }
       });
       const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
+      const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
       
-      return `<div class="leave-summary-card" data-name="${emp.full_name}" style="display:none;">
-        <div class="leave-summary-header"><strong>${emp.full_name}</strong><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
+      return `<div class="leave-summary-card" data-name="${emp.full_name} ${emp.personnel_code || ''}" style="display:none;">
+        <div class="leave-summary-header"><strong>${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
         <div class="detail-grid">
             <div class="detail-item"><strong>روزانه:</strong><br>${formatWorkDaysAndHours(dM).daysText}</div>
             <div class="detail-item"><strong>ساعتی:</strong><br>${formatHoursAndMinutes(hM)}</div>
@@ -1027,23 +1070,38 @@
 
   async function loadRecords() {
     const list = document.getElementById('recordsList');
-    const { data } = await client.from('leave_records').select('*, employees(full_name)').order('created_at', { ascending: false });
+    const { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name)').order('created_at', { ascending: false });
     if(data) {
       let html = data.map(r => {
         const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
+        const emp = r.employees;
+        const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
         
         const sd = new Date(r.start_at);
         const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
         const dateStr = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`; 
         const dateStrNoZero = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`; 
         
-        const searchData = `${r.employees?r.employees.full_name:''} ${dateStr} ${dateStrNoZero}`;
+        const searchData = `${emp ? emp.full_name : ''} ${emp ? emp.personnel_code : ''} ${dateStr} ${dateStrNoZero}`;
         const recordMonth = String(sShamsi.month);
 
         const currentMonth = window.currentMonthFilter;
         const displayStyle = (currentMonth === 'all' || currentMonth === recordMonth) ? '' : 'display:none;';
+        
+        const badgeClass = getBadgeClass(r.record_type);
+        const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
 
-        return `<div class="card" data-month="${recordMonth}" data-search="${searchData}" style="${displayStyle}"><strong>${r.employees?r.employees.full_name:'نامشخص'}</strong> <small style="color:var(--text-muted)">(${TYPE_LABELS[r.record_type]||r.record_type})</small><br><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small><div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div></div>`;
+        return `<div class="card" data-month="${recordMonth}" data-search="${normalizeText(searchData)}" style="${displayStyle}">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <strong>${emp ? emp.full_name : 'نامشخص'}</strong>
+              <small style="color:var(--text-muted);">${codeText}</small>
+            </div>
+            <span class="record-type-badge ${badgeClass}">${typeLabel}</span>
+          </div>
+          <div style="margin-top: 8px;"><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small></div>
+          <div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div>
+        </div>`;
       }).join('');
 
       list.innerHTML = html;
