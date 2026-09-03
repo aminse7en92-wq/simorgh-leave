@@ -6,6 +6,10 @@
   
   <link rel="icon" href="icon.png" type="image/png">
   <link rel="apple-touch-icon" href="icon.png">
+  
+  <!-- تنظیمات PWA برای دسکتاپ و موبایل جهت نمایش آیکون سیمرغ -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#047857">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="مرخصی سیمرغ">
@@ -336,12 +340,12 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق با قابلیت فیلتر بازه تاریخ -->
+    <!-- تب سوابق با فیلتر تاریخ و دکمه دانلود اکسل سوابق -->
     <div id="tabRecords" class="tab-content hidden">
       <h2>📋 سوابق ثبت‌شده</h2>
       
       <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
-        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 فیلتر سوابق بر اساس بازه تاریخ</h3>
+        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 فیلتر و خروجی اکسل سوابق</h3>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
           <div style="flex:1;">
             <label style="font-size:0.75rem;">از تاریخ:</label>
@@ -352,7 +356,10 @@
             <input type="text" id="filterEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
           </div>
         </div>
-        <button type="button" onclick="clearRecordsDateFilter()" style="margin-top:0; padding:8px; background:var(--border-color); color:var(--text-main); font-size:0.8rem;">حذف فیلتر تاریخ (نمایش همه)</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="exportFilteredRecordsCSV()" style="margin-top:0; padding:10px; background:#059669; font-size:0.85rem; flex:1;">📥 دانلود اکسل این سوابق</button>
+          <button type="button" onclick="clearRecordsDateFilter()" style="margin-top:0; padding:10px; background:var(--border-color); color:var(--text-main); font-size:0.8rem; flex:1;">نمایش همه</button>
+        </div>
       </div>
 
       <div class="month-filters" id="monthFiltersContainer">
@@ -590,7 +597,6 @@
     if(btn) btn.classList.add('active');
     window.currentMonthFilter = monthCode;
     
-    // پاک کردن فیلتر بازه تاریخ هنگام انتخاب ماه
     document.getElementById('filterStartDate').value = '';
     document.getElementById('filterEndDate').value = '';
     
@@ -598,7 +604,6 @@
   }
 
   function applyRecordsDateFilter() {
-    // غیرفعال کردن دکمه‌های ماه وقتی بازه تاریخ دستی وارد می‌شود
     document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
     window.currentMonthFilter = 'all';
     applyRecordsFilters();
@@ -683,6 +688,41 @@
     } else if (emptyMsg) {
       emptyMsg.style.display = 'none';
     }
+  }
+
+  // خروجی اکسل برای سوابق ثبت‌شده (فقط موارد قابل مشاهده در صفحه)
+  function exportFilteredRecordsCSV() {
+    const listContainer = document.getElementById('recordsList');
+    const visibleCards = Array.from(listContainer.querySelectorAll('.card')).filter(c => c.style.display !== 'none');
+    
+    if (visibleCards.length === 0) {
+      alert('رکوردی برای دانلود در این بازه وجود ندارد.');
+      return;
+    }
+
+    let csvContent = '\uFEFF';
+    csvContent += "نام پرسنل,کد پرسنلی,نوع مرخصی,تاریخ و ساعت شروع,تاریخ و ساعت پایان,توضیحات\n";
+
+    visibleCards.forEach(card => {
+      const text = card.innerText;
+      // استخراج اطلاعات از کارت به صورت امن
+      const strongEl = card.querySelector('strong');
+      const smallEl = card.querySelector('small');
+      const badgeEl = card.querySelector('.record-type-badge');
+      const name = strongEl ? strongEl.innerText.trim() : '';
+      const type = badgeEl ? badgeEl.innerText.trim() : '';
+      
+      const spans = card.querySelectorAll('span[dir="ltr"]');
+      const start = spans.length > 0 ? spans[0].innerText : '';
+      const end = spans.length > 1 ? spans[1].innerText : '';
+      
+      csvContent += `"${name}","","${type}","${start}","${end}",""\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a"); const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url); link.setAttribute("download", "گزارش_سوابق_ثبت_شده.csv");
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
   function filterRemaining(query) {
