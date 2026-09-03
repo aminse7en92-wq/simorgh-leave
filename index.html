@@ -37,9 +37,14 @@
     h2, h3 { text-align: center; font-weight: 700; margin-bottom: 20px; }
 
     .dashboard-header {
-      background: linear-gradient(135deg, #1e40af, #3b82f6);
-      color: white; padding: 20px; border-radius: 12px; text-align: center;
-      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+      background: linear-gradient(135deg, #065f46, #047857);
+      color: white; padding: 20px; border-radius: 16px; text-align: center;
+      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+    }
+    .app-logo {
+      width: 70px; height: 70px; object-fit: contain; background: white;
+      border-radius: 50%; padding: 6px; margin-bottom: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
     .dashboard-header h2 { margin: 0; font-size: 1.15rem; color: white; line-height: 1.6; }
     .dashboard-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
@@ -166,6 +171,7 @@
 
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
+        <img src="icon.png" alt="لوگو سیمرغ" class="app-logo">
         <h2>سیستم مدیریت مرخصی<br>شرکت سیمرغ</h2>
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
@@ -221,7 +227,7 @@
           <div class="form-group">
             <label>⏳ تاریخ شروع:</label>
             <div class="date-time-group">
-              <input type="text" id="startDateManual" required placeholder="__ / __ / ____" autocomplete="off" inputmode="numeric" maxlength="10">
+              <input type="text" id="startDateManual" required placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
               <input type="time" id="startTimeManual" required>
             </div>
           </div>
@@ -229,7 +235,7 @@
           <div class="form-group">
             <label>⌛️ تاریخ پایان:</label>
             <div class="date-time-group">
-              <input type="text" id="endDateManual" placeholder="__ / __ / ____" autocomplete="off" inputmode="numeric" maxlength="10">
+              <input type="text" id="endDateManual" placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
               <input type="time" id="endTimeManual" required>
             </div>
             <small style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی ساعتی، نیاز به پر کردن تاریخ پایان نیست.</small>
@@ -423,7 +429,6 @@
       .trim();
   }
 
-  // سیستم تبدیل خودکار ارقام به قالب __ / __ / ____
   const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual'];
   dateInputs.forEach(id => {
     const el = document.getElementById(id);
@@ -756,7 +761,8 @@
   function parseManualInputToDate(dateId, timeId) {
     const rawDate = document.getElementById(dateId).value; const rawTime = document.getElementById(timeId).value;
     if (!rawDate || !rawTime) return null;
-    const dateParts = toEnglishDigits(rawDate).trim().replace(/-/g, '/').split('/').map(Number);
+    const cleanDate = toEnglishDigits(rawDate).replace(/\s/g, '');
+    const dateParts = cleanDate.split('/').map(Number);
     const timeParts = toEnglishDigits(rawTime).trim().split(':').map(Number);
     if (dateParts.length !== 3 || timeParts.length !== 2) return null;
     const [year, month, day] = dateParts; const [hour, minute] = timeParts;
