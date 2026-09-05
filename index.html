@@ -1156,9 +1156,16 @@
     if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
 
     const creatorName = getPersianName(user.email);
+    const selectedEmpId = document.getElementById('employeeSelect').value;
+
+    if (!selectedEmpId) {
+      status.style.color = "var(--danger)";
+      status.innerText = "لطفاً یک پرسنل انتخاب کنید.";
+      return;
+    }
 
     const { error } = await client.from('leave_records').insert([{ 
-      employee_id: document.getElementById('employeeSelect').value, 
+      employee_id: selectedEmpId, 
       record_type: document.getElementById('recordType').value, 
       start_at: startObj.toISOString(), 
       end_at: endObj.toISOString(), 
