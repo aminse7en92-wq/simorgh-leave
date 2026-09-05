@@ -1155,7 +1155,6 @@
     if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است (مثال: 1403/06/12)."; return; }
     if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
 
-    const creatorName = getPersianName(user.email);
     const selectedEmpId = document.getElementById('employeeSelect').value;
 
     if (!selectedEmpId) {
@@ -1170,7 +1169,7 @@
       start_at: startObj.toISOString(), 
       end_at: endObj.toISOString(), 
       note: document.getElementById('note').value, 
-      created_by: creatorName 
+      created_by: user.id 
     }]);
 
     if (!error) { status.style.color = "var(--success)"; status.innerText = "ثبت شد!"; document.getElementById('note').value = ''; loadDashboard(); loadMonthlyStatus(); }
