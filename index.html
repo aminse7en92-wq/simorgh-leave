@@ -1143,7 +1143,6 @@
   document.getElementById('leaveForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('leaveStatus');
-    const { data: { user } } = await client.auth.getUser();
     
     if (!document.getElementById('endDateManual').value) {
         document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
@@ -1168,8 +1167,7 @@
       record_type: document.getElementById('recordType').value, 
       start_at: startObj.toISOString(), 
       end_at: endObj.toISOString(), 
-      note: document.getElementById('note').value, 
-      created_by: user.id 
+      note: document.getElementById('note').value 
     }]);
 
     if (!error) { status.style.color = "var(--success)"; status.innerText = "ثبت شد!"; document.getElementById('note').value = ''; loadDashboard(); loadMonthlyStatus(); }
