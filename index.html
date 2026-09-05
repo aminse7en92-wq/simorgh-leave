@@ -82,6 +82,7 @@
       cursor: pointer; margin-top: 10px; transition: background 0.2s ease;
     }
     button:active { transform: scale(0.98); }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
     
     .btn-add-emp { background: var(--success); }
     .btn-export { background: #059669; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
@@ -93,7 +94,7 @@
     .btn-logout { background: var(--border-color); color: var(--text-muted); margin-top: 30px; }
     
     .hidden { display: none !important; }
-    .status { margin-top: 12px; font-size: 0.9rem; text-align: center; font-weight: 600; }
+    .status { margin-top: 12px; font-size: 0.95rem; text-align: center; font-weight: bold; }
     
     .card, .emp-item, .leave-summary-card { 
       background: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; 
@@ -266,7 +267,7 @@
           </div>
           
           <div class="form-group"><label>💬 توضیحات (علت):</label><textarea id="note" rows="2" placeholder="توضیحات اختیاری..."></textarea></div>
-          <button type="submit">ثبت نهایی مرخصی</button>
+          <button type="submit" id="submitLeaveBtn">ثبت نهایی مرخصی</button>
         </form>
         <div id="leaveStatus" class="status"></div>
       </div>
@@ -1143,6 +1144,7 @@
   document.getElementById('leaveForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('leaveStatus');
+    const submitBtn = document.getElementById('submitLeaveBtn');
     
     if (!document.getElementById('endDateManual').value) {
         document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
@@ -1162,6 +1164,12 @@
       return;
     }
 
+    // غیرفعال کردن دکمه و نمایش پیام در حال ارسال
+    submitBtn.disabled = true;
+    submitBtn.innerText = "در حال ثبت...";
+    status.style.color = "var(--primary)";
+    status.innerText = "⏳ در حال ارسال به سرور...";
+
     const { error } = await client.from('leave_records').insert([{ 
       employee_id: selectedEmpId, 
       record_type: document.getElementById('recordType').value, 
@@ -1172,9 +1180,9 @@
 
     if (!error) { 
       status.style.color = "var(--success)"; 
-      status.innerText = "مرخصی با موفقیت ثبت شد! می‌توانید فرد بعدی را ثبت کنید."; 
+      status.innerText = "✅ مرخصی با موفقیت ثبت شد! می‌توانید شخص بعدی را ثبت کنید."; 
       
-      // پاک کردن فیلدهای فرم و بازنشانی منوی کشویی پرسنل برای ثبت نفر بعدی
+      // پاک کردن فرم و بازنشانی دکمه
       document.getElementById('leaveForm').reset();
       filterLeaveSelect('');
       
@@ -1184,6 +1192,10 @@
       status.style.color = "var(--danger)"; 
       status.innerText = "خطا در ثبت: " + error.message; 
     }
+
+    // فعال کردن مجدد دکمه
+    submitBtn.disabled = false;
+    submitBtn.innerText = "ثبت نهایی مرخصی";
   });
 
   function openEditRecordModal(id, type, start, end, note) {
