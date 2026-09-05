@@ -476,7 +476,6 @@
   const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // نگاشت کامل شامل ایمیل جیمیل موجود در دیتابیس شما
   const userMapping = {
     'a.saeid': 'amin.saeed@simorgh.local',
     'amin': 'amin.se7en92@gmail.com',
@@ -563,17 +562,22 @@
     }
 
     const status = document.getElementById('loginStatus'); 
-    status.innerText = "در حال ورود به سیستم...";
+    status.style.color = "var(--text-muted)";
+    status.innerText = "در حال ارتباط با سرور...";
+    
     try {
-      const { error } = await client.auth.signInWithPassword({ email, password });
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) { 
         status.style.color = "var(--danger)"; 
-        status.innerText = "خطا در نام کاربری یا کلمه عبور."; 
+        status.innerText = "خطای ورود: " + error.message; 
       } else { 
-        init(); 
+        status.style.color = "var(--success)";
+        status.innerText = "ورود موفقیت‌آمیز! در حال بارگذاری...";
+        setTimeout(() => init(), 500);
       }
     } catch(err) {
-      status.style.color = "var(--danger)"; status.innerText = "خطای ارتباط با سرور. اینترنت را چک کنید.";
+      status.style.color = "var(--danger)"; 
+      status.innerText = "خطای سیستم: " + err.message;
     }
   });
 
