@@ -310,7 +310,13 @@
     <!-- تب پرسنل -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
-      <div class="card">
+      
+      <div id="adminEmployeeGuard" class="hidden" style="text-align:center; padding:30px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:var(--danger); margin-bottom:20px;">
+        <h3>⛔ محدودیت دسترسی</h3>
+        <p>فقط حساب کاربری امین سعید (`amin.se7en92@gmail.com`) به بخش ثبت و مدیریت پرسنل دسترسی دارد.</p>
+      </div>
+
+      <div class="card" id="addEmployeeCard">
         <form id="addEmployeeForm">
           <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="empPersonnelCode" placeholder="مثال: 101" inputmode="numeric"></div>
           <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="empFullName" required placeholder="مثال: رضا احمدی"></div>
@@ -941,6 +947,19 @@
       const displayName = getPersianName(userEmail);
       document.getElementById('currentLoggedInUser').innerText = displayName;
 
+      // بررسی دسترسی ادمین برای ثبت پرسنل
+      const isAdmin = (userEmail.toLowerCase() === 'amin.se7en92@gmail.com');
+      const addEmpCard = document.getElementById('addEmployeeCard');
+      const adminGuard = document.getElementById('adminEmployeeGuard');
+
+      if (isAdmin) {
+        if(addEmpCard) addEmpCard.classList.remove('hidden');
+        if(adminGuard) adminGuard.classList.add('hidden');
+      } else {
+        if(addEmpCard) addEmpCard.classList.add('hidden');
+        if(adminGuard) adminGuard.classList.remove('hidden');
+      }
+
       await loadEmployeesList(); loadDashboard();
     } else {
       document.getElementById('loginSection').classList.remove('hidden');
@@ -1092,6 +1111,12 @@
 
   document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const { data: { session } } = await client.auth.getSession();
+    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
+      alert("شما اجازه ثبت پرسنل جدید را ندارید.");
+      return;
+    }
+
     let pCode = document.getElementById('empPersonnelCode').value.trim();
     if (pCode === "") pCode = null;
     const { error } = await client.from('employees').insert([{ personnel_code: pCode, full_name: document.getElementById('empFullName').value, position: document.getElementById('empPosition').value }]);
@@ -1101,6 +1126,9 @@
 
   async function loadEmployeesList() {
     const { data } = await client.from('employees').select('*');
+    const { data: { session } } = await client.auth.getSession();
+    const isAdmin = session && session.user.email.toLowerCase() === 'amin.se7en92@gmail.com';
+
     const select = document.getElementById('employeeSelect'); const manageList = document.getElementById('employeesManageList');
     if (data && data.length > 0) {
       data.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
@@ -1113,7 +1141,8 @@
       
       manageList.innerHTML = data.map(e => {
         const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
-        return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div><div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div></div>`;
+        const actionsHtml = isAdmin ? `<div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div>` : '';
+        return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div>${actionsHtml}</div>`;
       }).join('');
     } else {
       allEmployeesData = []; select.innerHTML = `<option value="">بدون پرسنل</option>`; manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
@@ -1131,6 +1160,12 @@
 
   document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const { data: { session } } = await client.auth.getSession();
+    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
+      alert("اجازه ویرایش ندارید.");
+      return;
+    }
+
     let pCode = document.getElementById('editEmpPersonnelCode').value.trim();
     if (pCode === "") pCode = null;
     await client.from('employees').update({ personnel_code: pCode, full_name: document.getElementById('editEmpFullName').value, position: document.getElementById('editEmpPosition').value }).eq('id', document.getElementById('editEmpId').value);
@@ -1138,6 +1173,12 @@
   });
 
   async function deleteEmployee(id, name) {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
+      alert("اجازه حذف ندارید.");
+      return;
+    }
+
     if (confirm(`حذف ${name} و سوابقش؟`)) { await client.from('leave_records').delete().eq('employee_id', id); await client.from('employees').delete().eq('id', id); loadEmployeesList(); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); }
   }
 
@@ -1164,7 +1205,6 @@
       return;
     }
 
-    // غیرفعال کردن دکمه و نمایش پیام در حال ارسال
     submitBtn.disabled = true;
     submitBtn.innerText = "در حال ثبت...";
     status.style.color = "var(--primary)";
@@ -1182,7 +1222,6 @@
       status.style.color = "var(--success)"; 
       status.innerText = "✅ مرخصی با موفقیت ثبت شد! می‌توانید شخص بعدی را ثبت کنید."; 
       
-      // پاک کردن فرم و بازنشانی دکمه
       document.getElementById('leaveForm').reset();
       filterLeaveSelect('');
       
@@ -1193,7 +1232,6 @@
       status.innerText = "خطا در ثبت: " + error.message; 
     }
 
-    // فعال کردن مجدد دکمه
     submitBtn.disabled = false;
     submitBtn.innerText = "ثبت نهایی مرخصی";
   });
