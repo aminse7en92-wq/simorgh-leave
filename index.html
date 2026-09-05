@@ -172,7 +172,7 @@
   <div id="loginSection">
     <h2>🔐 ورود سیستم</h2>
     <form id="loginForm">
-      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="نام کاربری" autocomplete="username"></div>
+      <div class="form-group"><label>نام کاربری:</label><input type="text" id="loginUsername" required placeholder="مثال: a.saeid" autocomplete="username" autocapitalize="none"></div>
       <div class="form-group"><label>کلمه عبور:</label><input type="password" id="loginPassword" required placeholder="کلمه عبور"></div>
       
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
@@ -476,10 +476,11 @@
   const SUPABASE_ANON_KEY = "sb_publishable_3L1aeJNL1YoVS_rdX08eYQ_lLwMHXCo";
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // نگاشت نام‌های کاربری جدید انگلیسی به ایمیل‌های سیستم
   const userMapping = {
-    'امین سعید': 'amin.saeed@simorgh.local',
-    'محمد گیشین زاده': 'm.gishinzadeh@simorgh.local',
-    'مهرداد شادمان': 'mehrdad@simorgh.local'
+    'a.saeid': 'amin.saeed@simorgh.local',
+    'm.gishini': 'm.gishinzadeh@simorgh.local',
+    'm.shadman': 'mehrdad@simorgh.local'
   };
 
   const reverseUserMapping = {
@@ -492,7 +493,6 @@
   function getPersianName(val) {
     if (!val) return 'سیستم';
     if (reverseUserMapping[val]) return reverseUserMapping[val];
-    // اگر شناسه سیستمی (UUID) بود ولی در مپینگ نبود، بررسی بر اساس تطابق نسبی یا بازگرداندن پیش‌فرض
     if (val.length > 20) {
       if (val.includes('d1a0c01a')) return 'امین سعید';
       if (val.includes('f57ed6b6')) return 'امین سعید';
@@ -544,13 +544,13 @@
 
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const inputVal = document.getElementById('loginUsername').value.trim();
+    const inputVal = document.getElementById('loginUsername').value.trim().toLowerCase();
     const password = toEnglishDigits(document.getElementById('loginPassword').value);
     const rememberMe = document.getElementById('rememberMe').checked;
 
     let email = inputVal;
     if (!inputVal.includes('@')) {
-      email = userMapping[inputVal] || (inputVal.replace(/\s+/g, '') + '@simorgh.local');
+      email = userMapping[inputVal] || (inputVal + '@simorgh.local');
     }
 
     if (rememberMe) {
@@ -1218,10 +1218,10 @@
   function getBadgeClass(type) {
     switch(type) {
       case 'daily_leave': case 'daily': return 'badge-blue';
-      case 'hourly_leave': return 'badge-green';
-      case 'sick_leave': return 'badge-orange';
-      case 'official_holiday': return 'badge-black';
-      case 'absence': return 'badge-red';
+      case 'hourly_leave': case 'badge-green';
+      case 'sick_leave': case 'badge-orange';
+      case 'official_holiday': case 'badge-black';
+      case 'absence': case 'badge-red';
       default: return 'badge-blue';
     }
   }
