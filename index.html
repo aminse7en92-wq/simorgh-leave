@@ -1170,8 +1170,20 @@
       note: document.getElementById('note').value 
     }]);
 
-    if (!error) { status.style.color = "var(--success)"; status.innerText = "ثبت شد!"; document.getElementById('note').value = ''; loadDashboard(); loadMonthlyStatus(); }
-    else { status.style.color = "var(--danger)"; status.innerText = "خطا در ثبت: " + error.message; }
+    if (!error) { 
+      status.style.color = "var(--success)"; 
+      status.innerText = "مرخصی با موفقیت ثبت شد! می‌توانید فرد بعدی را ثبت کنید."; 
+      
+      // پاک کردن فیلدهای فرم و بازنشانی منوی کشویی پرسنل برای ثبت نفر بعدی
+      document.getElementById('leaveForm').reset();
+      filterLeaveSelect('');
+      
+      loadDashboard(); 
+      loadMonthlyStatus(); 
+    } else { 
+      status.style.color = "var(--danger)"; 
+      status.innerText = "خطا در ثبت: " + error.message; 
+    }
   });
 
   function openEditRecordModal(id, type, start, end, note) {
