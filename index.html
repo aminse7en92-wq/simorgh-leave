@@ -343,7 +343,7 @@
 
       <h3 style="margin-top: 30px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
       
-      <div class="category-filters">
+      <div class="category-filters" id="employeeCategoryFilters">
         <button type="button" class="filter-btn active" onclick="filterByJob('all', this)">همه پرسنل</button>
         <button type="button" class="filter-btn" onclick="filterByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
         <button type="button" class="filter-btn" onclick="filterByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
@@ -518,6 +518,18 @@
       .replace(/\u200C/g, ' ')
       .toLowerCase()
       .trim();
+  }
+
+  // تابع بررسی دسترسی کاربر به پرسنل خاص (تولید و بسته بندی 2 برای m.gishini)
+  function isAllowedEmployee(empPosition, userEmail) {
+    if (!userEmail) return false;
+    const email = userEmail.toLowerCase();
+    // اگر کاربر m.gishini است، فقط اجازه دسترسی به تولید و بسته بندی 2 را دارد
+    if (email === 'm.gishinzadeh@simorgh.local' || email.includes('m.gishini')) {
+      return empPosition === 'تولید' || empPosition === 'بسته بندی 2';
+    }
+    // سایر کاربران دسترسی کامل دارند
+    return true;
   }
 
   const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual', 'reportStartDate', 'reportEndDate', 'filterStartDate', 'filterEndDate'];
@@ -919,9 +931,15 @@
     }
 
     alert('در حال آماده‌سازی فایل اکسل...');
-    const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
     if (!employees || employees.length === 0) return;
+
+    // اعمال محدودیت برای m.gishini
+    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
 
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
@@ -986,6 +1004,15 @@
         if(adminGuard) adminGuard.classList.remove('hidden');
       }
 
+      // تنظیم فیلترهای تب پرسنل بر اساس کاربر
+      const catFilters = document.getElementById('employeeCategoryFilters');
+      const emailLower = userEmail.toLowerCase();
+      if (emailLower === 'm.gishinzadeh@simorgh.local' || emailLower.includes('m.gishini')) {
+        if(catFilters) catFilters.style.display = 'none'; // مخفی کردن فیلترهای دیگر برای m.gishini
+      } else {
+        if(catFilters) catFilters.style.display = 'flex';
+      }
+
       await loadEmployeesList(); loadDashboard();
     } else {
       document.getElementById('loginSection').classList.remove('hidden');
@@ -1036,10 +1063,20 @@
     const containerToday = document.getElementById('dashboardTodayLeave');
     const containerTomorrow = document.getElementById('dashboardTomorrowLeave');
     
-    const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
-    const { data: records } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)');
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    let { data: records } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)');
     
+    if (employees) {
+      employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    }
+    const allowedEmpIds = new Set((employees || []).map(e => e.id));
+
     if (records) {
+      records = records.filter(r => allowedEmpIds.has(r.employee_id));
+
       const today = new Date();
       const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
       const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
@@ -1095,10 +1132,15 @@
   async function loadMonthlyStatus() {
     const container = document.getElementById('monthlyStatusList');
     container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
-    const { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
     if (!employees || employees.length === 0) return;
 
+    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
     const today = new Date();
@@ -1151,9 +1193,14 @@
   });
 
   async function loadEmployeesList() {
-    const { data } = await client.from('employees').select('*');
+    let { data } = await client.from('employees').select('*');
     const { data: { session } } = await client.auth.getSession();
-    const isAdmin = session && session.user.email.toLowerCase() === 'amin.se7en92@gmail.com';
+    const userEmail = session ? session.user.email : '';
+    const isAdmin = session && userEmail.toLowerCase() === 'amin.se7en92@gmail.com';
+
+    if (data) {
+      data = data.filter(e => isAllowedEmployee(e.position, userEmail));
+    }
 
     const select = document.getElementById('employeeSelect'); const manageList = document.getElementById('employeesManageList');
     if (data && data.length > 0) {
@@ -1340,9 +1387,15 @@
 
   async function loadRemainingLeave() {
     const container = document.getElementById('remainingList');
-    const { data: employees } = await client.from('employees').select('*'); const { data: records } = await client.from('leave_records').select('*');
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('*'); 
+    const { data: records } = await client.from('leave_records').select('*');
     if (!employees || employees.length === 0) return;
 
+    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
     container.innerHTML = employees.map(emp => {
@@ -1378,8 +1431,16 @@
 
   async function loadRecords() {
     const list = document.getElementById('recordsList');
-    const { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name)').order('start_at', { ascending: false });
-    if(data) {
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)').order('start_at', { ascending: false });
+    
+    if (data) {
+      // فقط رکوردهایی را نشان بده که پرسنل مربوطه جزو مجازها باشد
+      data = data.filter(r => r.employees && isAllowedEmployee(r.employees.position, userEmail));
+
       let html = data.map(r => {
         const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
         const emp = r.employees;
