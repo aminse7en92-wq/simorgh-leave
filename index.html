@@ -67,6 +67,7 @@
       font-size: 16px; background: var(--card-bg); transition: all 0.2s ease; outline: none;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    input:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
     
     .date-time-group { display: flex; gap: 10px; align-items: center; }
     .date-time-group input[type="text"], .date-time-group input[type="time"] { flex: 1; text-align: center; direction: ltr; letter-spacing: 1px; }
@@ -240,7 +241,7 @@
             </select>
           </div>
           <div class="form-group"><label>📌 نوع مرخصی:</label>
-            <select id="recordType">
+            <select id="recordType" onchange="handleRecordTypeChange()">
               <option value="daily_leave">مرخصی روزانه</option>
               <option value="hourly_leave">مرخصی ساعتی</option>
               <option value="sick_leave">استعلاجی</option>
@@ -253,7 +254,7 @@
             <label>⏳ تاریخ شروع:</label>
             <div class="date-time-group">
               <input type="text" id="startDateManual" required placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
-              <input type="time" id="startTimeManual" required>
+              <input type="time" id="startTimeManual" value="07:00" required>
             </div>
           </div>
           
@@ -261,9 +262,9 @@
             <label>⌛️ تاریخ پایان:</label>
             <div class="date-time-group">
               <input type="text" id="endDateManual" placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
-              <input type="time" id="endTimeManual" required>
+              <input type="time" id="endTimeManual" value="14:20" required>
             </div>
-            <small style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی ساعتی، نیاز به پر کردن تاریخ پایان نیست.</small>
+            <small id="timeHelpText" style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی غیرساعتی، ساعت به طور پیش‌فرض معادل ۷ ساعت و ۲۰ دقیقه (۰۷:۰۰ الی ۱۴:۲۰) محاسبه می‌شود.</small>
           </div>
           
           <div class="form-group"><label>💬 توضیحات (علت):</label><textarea id="note" rows="2" placeholder="توضیحات اختیاری..."></textarea></div>
@@ -312,8 +313,7 @@
       <h2>👥 مدیریت پرسنل</h2>
       
       <div id="adminEmployeeGuard" class="hidden" style="text-align:center; padding:30px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:var(--danger); margin-bottom:20px;">
-        <h3>⛔ محدودیت دسترسی</h3>
-        <p>فقط حساب کاربری امین سعید (`amin.se7en92@gmail.com`) به بخش ثبت و مدیریت پرسنل دسترسی دارد.</p>
+        <h3>شما به این بخش دسترسی ندارید</h3>
       </div>
 
       <div class="card" id="addEmployeeCard">
@@ -610,6 +610,27 @@
     'absence': 'غیبت'
   };
 
+  function handleRecordTypeChange() {
+    const type = document.getElementById('recordType').value;
+    const startTimeInput = document.getElementById('startTimeManual');
+    const endTimeInput = document.getElementById('endTimeManual');
+    const helpText = document.getElementById('timeHelpText');
+
+    if (type === 'hourly_leave') {
+      startTimeInput.disabled = false;
+      endTimeInput.disabled = false;
+      startTimeInput.value = "07:00";
+      endTimeInput.value = "";
+      helpText.innerText = "برای مرخصی ساعتی، ساعت شروع و پایان را به دقت وارد کنید.";
+    } else {
+      startTimeInput.disabled = true;
+      endTimeInput.disabled = true;
+      startTimeInput.value = "07:00";
+      endTimeInput.value = "14:20";
+      helpText.innerText = "برای این نوع مرخصی، ساعت به طور پیش‌فرض معادل ۷ ساعت و ۲۰ دقیقه (۰۷:۰۰ الی ۱۴:۲۰) محاسبه می‌شود.";
+    }
+  }
+
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(tabId).classList.remove('hidden');
@@ -617,7 +638,10 @@
     btn.classList.add('active');
 
     document.querySelectorAll('.search-input').forEach(input => { input.value = ''; });
-    if(tabId === 'tabLeave') filterLeaveSelect('');
+    if(tabId === 'tabLeave') {
+      filterLeaveSelect('');
+      handleRecordTypeChange();
+    }
     if(tabId === 'tabEmployees') { window.currentSearchQuery = ''; applyEmployeeFilters(); }
     if(tabId === 'tabRecords') {
       window.currentMonthFilter = 'all';
@@ -947,7 +971,6 @@
       const displayName = getPersianName(userEmail);
       document.getElementById('currentLoggedInUser').innerText = displayName;
 
-      // بررسی دسترسی ادمین برای ثبت پرسنل
       const isAdmin = (userEmail.toLowerCase() === 'amin.se7en92@gmail.com');
       const addEmpCard = document.getElementById('addEmployeeCard');
       const adminGuard = document.getElementById('adminEmployeeGuard');
@@ -1113,7 +1136,7 @@
     e.preventDefault();
     const { data: { session } } = await client.auth.getSession();
     if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
-      alert("شما اجازه ثبت پرسنل جدید را ندارید.");
+      alert("شما به این بخش دسترسی ندارید.");
       return;
     }
 
@@ -1162,7 +1185,7 @@
     e.preventDefault();
     const { data: { session } } = await client.auth.getSession();
     if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
-      alert("اجازه ویرایش ندارید.");
+      alert("شما به این بخش دسترسی ندارید.");
       return;
     }
 
@@ -1175,7 +1198,7 @@
   async function deleteEmployee(id, name) {
     const { data: { session } } = await client.auth.getSession();
     if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
-      alert("اجازه حذف ندارید.");
+      alert("شما به این بخش دسترسی ندارید.");
       return;
     }
 
@@ -1191,8 +1214,22 @@
         document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
     }
 
+    const recordType = document.getElementById('recordType').value;
+    
+    const startTimeInput = document.getElementById('startTimeManual');
+    const endTimeInput = document.getElementById('endTimeManual');
+    const wasDisabled = startTimeInput.disabled;
+    
+    startTimeInput.disabled = false;
+    endTimeInput.disabled = false;
+
     const startObj = parseManualInputToDate('startDateManual', 'startTimeManual');
     const endObj = parseManualInputToDate('endDateManual', 'endTimeManual');
+
+    if (wasDisabled) {
+      startTimeInput.disabled = true;
+      endTimeInput.disabled = true;
+    }
     
     if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است (مثال: 1403/06/12)."; return; }
     if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
@@ -1212,7 +1249,7 @@
 
     const { error } = await client.from('leave_records').insert([{ 
       employee_id: selectedEmpId, 
-      record_type: document.getElementById('recordType').value, 
+      record_type: recordType, 
       start_at: startObj.toISOString(), 
       end_at: endObj.toISOString(), 
       note: document.getElementById('note').value 
@@ -1223,6 +1260,7 @@
       status.innerText = "✅ مرخصی با موفقیت ثبت شد! می‌توانید شخص بعدی را ثبت کنید."; 
       
       document.getElementById('leaveForm').reset();
+      handleRecordTypeChange();
       filterLeaveSelect('');
       
       loadDashboard(); 
