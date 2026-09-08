@@ -254,7 +254,7 @@
             <label>⏳ تاریخ شروع:</label>
             <div class="date-time-group">
               <input type="text" id="startDateManual" required placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
-              <input type="time" id="startTimeManual" value="07:00" required>
+              <input type="time" id="startTimeManual" value="07:00" required disabled>
             </div>
           </div>
           
@@ -262,9 +262,9 @@
             <label>⌛️ تاریخ پایان:</label>
             <div class="date-time-group">
               <input type="text" id="endDateManual" placeholder="1403/06/12" autocomplete="off" inputmode="numeric" maxlength="10">
-              <input type="time" id="endTimeManual" value="14:20" required>
+              <input type="time" id="endTimeManual" value="14:20" required disabled>
             </div>
-            <small id="timeHelpText" style="color:var(--text-muted); display:block; margin-top:4px;">برای مرخصی غیرساعتی، ساعت به طور پیش‌فرض معادل ۷ ساعت و ۲۰ دقیقه (۰۷:۰۰ الی ۱۴:۲۰) محاسبه می‌شود.</small>
+            <small id="timeHelpText" style="color:var(--text-muted); display:block; margin-top:4px;">برای این نوع مرخصی، ساعت به طور پیش‌فرض معادل ۷ ساعت و ۲۰ دقیقه (۰۷:۰۰ الی ۱۴:۲۰) محاسبه می‌شود.</small>
           </div>
           
           <div class="form-group"><label>💬 توضیحات (علت):</label><textarea id="note" rows="2" placeholder="توضیحات اختیاری..."></textarea></div>
@@ -547,6 +547,7 @@
       document.getElementById('loginPassword').value = localStorage.getItem('savedPassword') || '';
       document.getElementById('rememberMe').checked = true;
     }
+    handleRecordTypeChange();
   });
 
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -616,18 +617,20 @@
     const endTimeInput = document.getElementById('endTimeManual');
     const helpText = document.getElementById('timeHelpText');
 
+    if (!startTimeInput || !endTimeInput) return;
+
     if (type === 'hourly_leave') {
       startTimeInput.disabled = false;
       endTimeInput.disabled = false;
       startTimeInput.value = "07:00";
       endTimeInput.value = "";
-      helpText.innerText = "برای مرخصی ساعتی، ساعت شروع و پایان را به دقت وارد کنید.";
+      if (helpText) helpText.innerText = "برای مرخصی ساعتی، ساعت شروع و پایان را به دقت وارد کنید.";
     } else {
       startTimeInput.disabled = true;
       endTimeInput.disabled = true;
       startTimeInput.value = "07:00";
       endTimeInput.value = "14:20";
-      helpText.innerText = "برای این نوع مرخصی، ساعت به طور پیش‌فرض معادل ۷ ساعت و ۲۰ دقیقه (۰۷:۰۰ الی ۱۴:۲۰) محاسبه می‌شود.";
+      if (helpText) helpText.innerText = "برای این نوع مرخصی، ساعت به طور پیش‌فرض معادل ۷ ساعت و ۲۰ دقیقه (۰۷:۰۰ الی ۱۴:۲۰) محاسبه می‌شود.";
     }
   }
 
