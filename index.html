@@ -520,15 +520,13 @@
       .trim();
   }
 
-  // تابع بررسی دسترسی کاربر به پرسنل خاص (تولید و بسته بندی 2 برای m.gishini)
+  // تابع بررسی دسترسی کاربر به پرسنل (تولید، بسته بندی 2، مهمان و سایر برای m.gishini)
   function isAllowedEmployee(empPosition, userEmail) {
     if (!userEmail) return false;
     const email = userEmail.toLowerCase();
-    // اگر کاربر m.gishini است، فقط اجازه دسترسی به تولید و بسته بندی 2 را دارد
     if (email === 'm.gishinzadeh@simorgh.local' || email.includes('m.gishini')) {
-      return empPosition === 'تولید' || empPosition === 'بسته بندی 2';
+      return empPosition === 'تولید' || empPosition === 'بسته بندی 2' || empPosition === 'مهمان' || empPosition === 'سایر';
     }
-    // سایر کاربران دسترسی کامل دارند
     return true;
   }
 
@@ -938,7 +936,6 @@
     const { data: records } = await client.from('leave_records').select('*');
     if (!employees || employees.length === 0) return;
 
-    // اعمال محدودیت برای m.gishini
     employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
 
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
@@ -1004,11 +1001,10 @@
         if(adminGuard) adminGuard.classList.remove('hidden');
       }
 
-      // تنظیم فیلترهای تب پرسنل بر اساس کاربر
       const catFilters = document.getElementById('employeeCategoryFilters');
       const emailLower = userEmail.toLowerCase();
       if (emailLower === 'm.gishinzadeh@simorgh.local' || emailLower.includes('m.gishini')) {
-        if(catFilters) catFilters.style.display = 'none'; // مخفی کردن فیلترهای دیگر برای m.gishini
+        if(catFilters) catFilters.style.display = 'none';
       } else {
         if(catFilters) catFilters.style.display = 'flex';
       }
@@ -1438,7 +1434,6 @@
     let { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)').order('start_at', { ascending: false });
     
     if (data) {
-      // فقط رکوردهایی را نشان بده که پرسنل مربوطه جزو مجازها باشد
       data = data.filter(r => r.employees && isAllowedEmployee(r.employees.position, userEmail));
 
       let html = data.map(r => {
