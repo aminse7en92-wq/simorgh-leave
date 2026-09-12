@@ -129,7 +129,7 @@
     .clickable-card { cursor: pointer; transition: transform 0.1s ease, box-shadow 0.1s ease; }
     .clickable-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-color: var(--primary); }
 
-    /* استایل تقویم ماهیانه */
+    /* تقویم ماهیانه */
     .calendar-container { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .calendar-header-title { text-align: center; font-weight: bold; font-size: 1rem; color: var(--primary); margin-bottom: 12px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
@@ -138,9 +138,13 @@
     .calendar-cell.empty { background: transparent; }
     .calendar-cell.today { background: var(--primary); color: white; font-weight: bold; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
 
-    .boxes-container { display: flex; gap: 5px; direction: rtl; }
-    .status-box { width: 24px; height: 24px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 13px; color: white; font-weight: bold; }
+    /* وضعیت 7 تایی با تاریخ زیر مربع */
+    .boxes-container { display: flex; gap: 4px; direction: rtl; }
+    .status-box-wrap { display: flex; flex-direction: column; align-items: center; }
+    .status-box { width: 26px; height: 26px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 12px; color: white; font-weight: bold; }
     .status-box.empty { background: #f1f5f9; border: 1px dashed #cbd5e1; color: transparent; }
+    .box-date { font-size: 9px; color: var(--text-muted); margin-top: 2px; text-align: center; white-space: nowrap; }
+    
     .box-blue { background: var(--primary); }
     .box-green { background: var(--success); }
     .box-orange { background: var(--warning); }
@@ -210,7 +214,7 @@
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
-      <!-- ساعت زنده تهران و تقویم ماهیانه استاندارد شمسی -->
+      <!-- ساعت زنده و تقویم ماهیانه استاندارد شمسی -->
       <div class="calendar-container">
         <div id="liveClock" style="text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); direction: ltr; margin-bottom: 6px;">--:--:--</div>
         <div id="calendarMonthTitle" class="calendar-header-title">--</div>
@@ -246,10 +250,27 @@
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
     </div>
 
+    <!-- بخش وضعیت ماهانه با منوی افقی ماه‌ها و تفکیک مشاغل -->
     <div id="tabMonthlyStatus" class="tab-content hidden">
-      <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
+      <h2>📅 وضعیت ماهانه</h2>
       
-      <!-- منوی دسته‌بندی افقی برای تفکیک سریع پرسنل در بخش وضعیت -->
+      <!-- منوی افقی انتخاب ماه‌ها -->
+      <div class="month-filters" id="statusMonthFilters" style="margin-bottom: 10px;">
+        <button type="button" class="month-btn active" onclick="filterStatusByMonth('01', this)">فروردین</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('02', this)">اردیبهشت</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('03', this)">خرداد</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('04', this)">تیر</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('05', this)">مرداد</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('06', this)">شهریور</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('07', this)">مهر</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('08', this)">آبان</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('09', this)">آذر</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('10', this)">دی</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('11', this)">بهمن</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('12', this)">اسفند</button>
+      </div>
+
+      <!-- منوی افقی دسته‌بندی مشاغل -->
       <div class="category-filters" id="statusCategoryFilters">
         <button type="button" class="filter-btn active" onclick="filterStatusByJob('all', this)">همه بخش‌ها</button>
         <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
@@ -353,7 +374,7 @@
       <div id="remainingList"></div>
     </div>
 
-    <!-- تب پرسنل -->
+    <!-- تب پرسنل با قابلیت کشویی (آکاردئون) -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
       
@@ -361,7 +382,10 @@
         <h3>شما به این بخش دسترسی ندارید</h3>
       </div>
 
-      <div class="card" id="addEmployeeCard">
+      <!-- دکمه باز کردن فرم ثبت پرسنل -->
+      <button type="button" id="toggleAddEmpBtn" onclick="toggleAddEmployeeForm()" style="background: var(--success); margin-bottom: 15px;">➕ افزودن پرسنل جدید</button>
+
+      <div class="card hidden" id="addEmployeeCard">
         <form id="addEmployeeForm">
           <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="empPersonnelCode" placeholder="مثال: 101" inputmode="numeric"></div>
           <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="empFullName" required placeholder="مثال: رضا احمدی"></div>
@@ -386,7 +410,7 @@
         <div id="empStatus" class="status"></div>
       </div>
 
-      <h3 style="margin-top: 30px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
+      <h3 style="margin-top: 20px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
       
       <div class="category-filters" id="employeeCategoryFilters">
         <button type="button" class="filter-btn active" onclick="filterByJob('all', this)">همه پرسنل</button>
@@ -575,7 +599,21 @@
     return true;
   }
 
-  // ساعت زنده تهران و تقویم ماهیانه استاندارد شمسی
+  function toggleAddEmployeeForm() {
+    const card = document.getElementById('addEmployeeCard');
+    const btn = document.getElementById('toggleAddEmpBtn');
+    if (card.classList.contains('hidden')) {
+      card.classList.remove('hidden');
+      btn.innerText = '✖ بستن فرم افزودن پرسنل';
+      btn.style.background = 'var(--danger)';
+    } else {
+      card.classList.add('hidden');
+      btn.innerText = '➕ افزودن پرسنل جدید';
+      btn.style.background = 'var(--success)';
+    }
+  }
+
+  // ساعت زنده و تقویم ماهیانه استاندارد شمسی
   function updateTehranClockAndCalendar() {
     try {
       const now = new Date();
@@ -647,6 +685,22 @@
       document.getElementById('loginPassword').value = localStorage.getItem('savedPassword') || '';
       document.getElementById('rememberMe').checked = true;
     }
+    
+    // تنظیم پیش‌فرض منوی ماه در صفحه وضعیت به ماه جاری شمسی
+    const today = new Date();
+    const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(today);
+    const [m, d, y] = tehranDateStr.split('/').map(Number);
+    const currentShamsi = gregorianToShamsi(y, m, d);
+    window.currentStatusMonth = currentShamsi.month;
+
+    const monthBtns = document.querySelectorAll('#statusMonthFilters .month-btn');
+    monthBtns.forEach((btn, idx) => {
+      if (String(idx + 1).padStart(2, '0') === currentShamsi.month) {
+        monthBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+    });
+
     handleRecordTypeChange();
     updateTehranClockAndCalendar();
   });
@@ -702,6 +756,7 @@
   let allEmployeesData = [];
   window.currentJobFilter = 'all';
   window.currentStatusJobFilter = 'all';
+  window.currentStatusMonth = '01';
   window.currentSearchQuery = '';
   window.currentMonthFilter = 'all';
 
@@ -801,6 +856,16 @@
         g.style.display = 'none';
       }
     });
+  }
+
+  function filterStatusByMonth(monthCode, btn) {
+    const parentContainer = document.getElementById('statusMonthFilters');
+    if(parentContainer) {
+      parentContainer.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    }
+    if(btn) btn.classList.add('active');
+    window.currentStatusMonth = monthCode;
+    loadMonthlyStatus();
   }
 
   function filterByMonth(monthCode, btn) {
@@ -1103,12 +1168,14 @@
 
       const isAdmin = (userEmail.toLowerCase() === 'amin.se7en92@gmail.com');
       const addEmpCard = document.getElementById('addEmployeeCard');
+      const toggleEmpBtn = document.getElementById('toggleAddEmpBtn');
       const adminGuard = document.getElementById('adminEmployeeGuard');
 
       if (isAdmin) {
-        if(addEmpCard) addEmpCard.classList.remove('hidden');
+        if(toggleEmpBtn) toggleEmpBtn.classList.remove('hidden');
         if(adminGuard) adminGuard.classList.add('hidden');
       } else {
+        if(toggleEmpBtn) toggleEmpBtn.classList.add('hidden');
         if(addEmpCard) addEmpCard.classList.add('hidden');
         if(adminGuard) adminGuard.classList.remove('hidden');
       }
@@ -1237,6 +1304,7 @@
     }
   }
 
+  // گسترش مرخصی‌ها به تفکیک روزهای بازه و محدودسازی به 7 مربع با نمایش تاریخ روز زیر آن
   async function loadMonthlyStatus() {
     const container = document.getElementById('monthlyStatusList');
     container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
@@ -1255,9 +1323,15 @@
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
     const today = new Date();
-    const currentShamsi = gregorianToShamsi(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(today);
+    const [tm, td, ty] = tehranDateStr.split('/').map(Number);
+    const currentShamsiToday = gregorianToShamsi(ty, tm, td);
+
+    const selectedMonth = window.currentStatusMonth || currentShamsiToday.month;
+    const currentYear = currentShamsiToday.year;
+    
     const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-    document.getElementById('currentMonthLabel').innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(currentShamsi.month) - 1]} ${currentShamsi.year}</span>`;
+    document.getElementById('currentMonthLabel').innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(selectedMonth) - 1]} ${currentYear}</span>`;
 
     let grouped = {};
     employees.forEach(emp => {
@@ -1283,17 +1357,40 @@
       
       grouped[pos].forEach(emp => {
         const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
-        const currentMonthRecords = empRecords.filter(rec => {
-          const recDate = new Date(rec.start_at);
-          const recShamsi = gregorianToShamsi(recDate.getFullYear(), recDate.getMonth() + 1, recDate.getDate());
-          return recShamsi.year == currentShamsi.year && recShamsi.month == currentShamsi.month;
-        }).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+        
+        // استخراج روزهای مرخصی در ماه انتخابی (گسترش بازه‌های چندروزه)
+        let dailyLeavesMap = {}; // کلید: روز شمسی، مقدار: نوع رکورد
+        
+        empRecords.forEach(rec => {
+          let sDate = new Date(rec.start_at);
+          let eDate = new Date(rec.end_at);
+          
+          let curr = new Date(sDate.getTime());
+          while (curr <= eDate) {
+            let gY = curr.getFullYear();
+            let gM = curr.getMonth() + 1;
+            let gD = curr.getDate();
+            let sObj = gregorianToShamsi(gY, gM, gD);
+            
+            if (sObj.year == currentYear && sObj.month == selectedMonth) {
+              dailyLeavesMap[parseInt(sObj.day)] = rec.record_type;
+            }
+            curr.setDate(curr.getDate() + 1);
+          }
+        });
+
+        // تعیین 7 روز برای نمایش (اگر امروز در این ماه است، امروز و ۶ روز قبل؛ وگرنه از روز اول ماه)
+        let targetDay = (selectedMonth === currentShamsiToday.month) ? parseInt(currentShamsiToday.day) : 1;
+        let startDay = Math.max(1, targetDay - 6);
+        let endDay = startDay + 6;
 
         let boxesHtml = '';
-        for (let i = 0; i < 6; i++) {
-          if (i < currentMonthRecords.length) {
+        for (let day = startDay; day <= endDay; day++) {
+          let dayStr = String(day).padStart(2, '0');
+          let recType = dailyLeavesMap[day];
+          if (recType) {
             let colorClass = '';
-            switch(currentMonthRecords[i].record_type) {
+            switch(recType) {
               case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
               case 'hourly_leave': colorClass = 'box-green'; break;
               case 'sick_leave': colorClass = 'box-orange'; break;
@@ -1301,9 +1398,12 @@
               case 'absence': colorClass = 'box-red'; break;
               case 'other': colorClass = 'box-purple'; break;
             }
-            boxesHtml += `<div class="status-box ${colorClass || 'box-blue'}">✔</div>`;
-          } else boxesHtml += `<div class="status-box empty"></div>`;
+            boxesHtml += `<div class="status-box-wrap"><div class="status-box ${colorClass || 'box-blue'}">✔</div><span class="box-date">${day} ${monthNames[parseInt(selectedMonth)-1].substring(0,3)}</span></div>`;
+          } else {
+            boxesHtml += `<div class="status-box-wrap"><div class="status-box empty"></div><span class="box-date">${day} ${monthNames[parseInt(selectedMonth)-1].substring(0,3)}</span></div>`;
+          }
         }
+
         const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
         html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small></div><div class="boxes-container">${boxesHtml}</div></div>`;
       });
@@ -1324,7 +1424,11 @@
     let pCode = document.getElementById('empPersonnelCode').value.trim();
     if (pCode === "") pCode = null;
     const { error } = await client.from('employees').insert([{ personnel_code: pCode, full_name: document.getElementById('empFullName').value, position: document.getElementById('empPosition').value }]);
-    if (!error) { document.getElementById('addEmployeeForm').reset(); loadEmployeesList(); }
+    if (!error) { 
+      document.getElementById('addEmployeeForm').reset(); 
+      toggleAddEmployeeForm();
+      loadEmployeesList(); 
+    }
     else alert("خطا: " + error.message);
   });
 
