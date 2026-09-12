@@ -1106,18 +1106,18 @@
     const { data: { session } } = await client.auth.getSession();
     const userEmail = session ? session.user.email : '';
 
-    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
-    const { data: records } = await client.from('leave_records').select('*');
-    if (!employees || employees.length === 0) return;
+    const { data: empData } = await client.from('employees').select('*');
+    const { data: recData } = await client.from('leave_records').select('*');
+    if (!empData || empData.length === 0) return;
 
-    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    let employees = empData.filter(emp => isAllowedEmployee(emp.position, userEmail));
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
     let csvContent = '\uFEFF';
     csvContent += "کد پرسنلی,نام و نام خانوادگی,محل کار,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,سایر,مانده (روز),مانده (ساعت)\n";
 
     employees.forEach(emp => {
-      let empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+      let empRecords = recData ? recData.filter(r => r.employee_id === emp.id) : [];
       
       if (startDate || endDate) {
         empRecords = empRecords.filter(rec => {
@@ -1186,9 +1186,9 @@
       }
 
       await loadEmployeesList(); 
-      loadDashboard(); 
-      loadMonthlyStatus();
-      loadRecords();
+      await loadDashboard(); 
+      await loadMonthlyStatus();
+      await loadRecords();
     } else {
       document.getElementById('loginSection').classList.remove('hidden');
       document.getElementById('appSection').classList.add('hidden');
@@ -1241,67 +1241,74 @@
     const { data: { session } } = await client.auth.getSession();
     const userEmail = session ? session.user.email : '';
 
-    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
-    let { data: records } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)');
+    const { data: empData, error: empErr } = await client.from('employees').select('*');
+    const { data: recData, error: recErr } = await client.from('leave_records').select('*');
     
-    if (employees) {
-      employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    if (empErr || recErr) {
+      if(containerStats) containerStats.innerHTML = `<div style="text-align:center; color:var(--danger); grid-column:span 2;">خطا در دریافت اطلاعات</div>`;
+      return;
     }
-    const allowedEmpIds = new Set((employees || []).map(e => e.id));
 
-    if (records) {
-      records = records.filter(r => allowedEmpIds.has(r.employee_id));
+    let employees = (empData || []).filter(emp => isAllowedEmployee(emp.position, userEmail));
+    const allowedEmpIds = new Set(employees.map(e => e.id));
+    
+    const empMap = {};
+    (empData || []).forEach(e => { empMap[e.id] = e; });
 
-      const today = new Date();
-      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
-      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-      
-      const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
-      const endOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 23, 59, 59);
+    let records = (recData || []).filter(r => allowedEmpIds.has(r.employee_id)).map(r => ({
+      ...r,
+      employees: empMap[r.employee_id] || null
+    }));
 
-      const activeToday = records.filter(r => new Date(r.start_at) <= endOfToday && new Date(r.end_at) >= startOfToday);
-      const activeTomorrow = records.filter(r => new Date(r.start_at) <= endOfTomorrow && new Date(r.end_at) >= startOfTomorrow);
-      
-      activeToday.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
-      activeTomorrow.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    
+    const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
+    const endOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 23, 59, 59);
 
-      if (activeToday.length > 0) {
-        containerToday.innerHTML = activeToday.map(r => {
-          const emp = r.employees;
-          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-          const badgeClass = getBadgeClass(r.record_type);
-          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
-        }).join('');
-      } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
-      
-      if (activeTomorrow.length > 0) {
-        containerTomorrow.innerHTML = activeTomorrow.map(r => {
-          const emp = r.employees;
-          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-          const badgeClass = getBadgeClass(r.record_type);
-          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
-        }).join('');
-      } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
-      
-      containerStats.innerHTML = `
-        <div class="detail-item info clickable-card" style="text-align:center;" onclick="switchTab('tabEmployees', document.querySelectorAll('.tab-item')[4])">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--primary);">${employees ? employees.length : 0}</span>
-          <strong>کل پرسنل 👥</strong>
-        </div>
-        <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[5])">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span>
-          <strong>کل سوابق 📋</strong>
-        </div>
-        <div class="detail-item danger" style="text-align:center;">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--danger);">${activeToday.length}</span>
-          <strong>مرخصی امروز</strong>
-        </div>
-        <div class="detail-item" style="text-align:center; background:#f3e8ff; border-color:#d8b4fe;">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:#9333ea;">${activeTomorrow.length}</span>
-          <strong style="color:#7e22ce;">مرخصی فردا</strong>
-        </div>
-      `;
-    }
+    const activeToday = records.filter(r => new Date(r.start_at) <= endOfToday && new Date(r.end_at) >= startOfToday);
+    const activeTomorrow = records.filter(r => new Date(r.start_at) <= endOfTomorrow && new Date(r.end_at) >= startOfTomorrow);
+    
+    activeToday.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
+    activeTomorrow.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
+
+    if (activeToday.length > 0) {
+      containerToday.innerHTML = activeToday.map(r => {
+        const emp = r.employees;
+        const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+        const badgeClass = getBadgeClass(r.record_type);
+        return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
+      }).join('');
+    } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
+    
+    if (activeTomorrow.length > 0) {
+      containerTomorrow.innerHTML = activeTomorrow.map(r => {
+        const emp = r.employees;
+        const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+        const badgeClass = getBadgeClass(r.record_type);
+        return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
+      }).join('');
+    } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
+    
+    containerStats.innerHTML = `
+      <div class="detail-item info clickable-card" style="text-align:center;" onclick="switchTab('tabEmployees', document.querySelectorAll('.tab-item')[4])">
+        <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--primary);">${employees.length}</span>
+        <strong>کل پرسنل 👥</strong>
+      </div>
+      <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[5])">
+        <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span>
+        <strong>کل سوابق 📋</strong>
+      </div>
+      <div class="detail-item danger" style="text-align:center;">
+        <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--danger);">${activeToday.length}</span>
+        <strong>مرخصی امروز</strong>
+      </div>
+      <div class="detail-item" style="text-align:center; background:#f3e8ff; border-color:#d8b4fe;">
+        <span style="font-size: 1.5rem; display:block; font-weight:bold; color:#9333ea;">${activeTomorrow.length}</span>
+        <strong style="color:#7e22ce;">مرخصی فردا</strong>
+      </div>
+    `;
   }
 </script>
 </body>
