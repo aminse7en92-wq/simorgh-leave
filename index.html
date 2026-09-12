@@ -753,7 +753,7 @@
   let allEmployeesData = [];
   window.currentJobFilter = 'all';
   window.currentStatusJobFilter = 'all';
-  window.currentStatusMonth = '06'; // پیش‌فرض شهریور (یا بر اساس تاریخ روز تنظیم می‌شود)
+  window.currentStatusMonth = '06';
   window.currentSearchQuery = '';
   window.currentMonthFilter = 'all';
 
@@ -1185,7 +1185,10 @@
         if(catFilters) catFilters.style.display = 'flex';
       }
 
-      await loadEmployeesList(); loadDashboard(); loadMonthlyStatus();
+      await loadEmployeesList(); 
+      loadDashboard(); 
+      loadMonthlyStatus();
+      loadRecords();
     } else {
       document.getElementById('loginSection').classList.remove('hidden');
       document.getElementById('appSection').classList.add('hidden');
