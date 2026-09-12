@@ -126,6 +126,17 @@
     .detail-item.danger { background: #fef2f2; border-color: #fecaca; }
     .detail-item.warning { background: #fffbeb; border-color: #fde68a; }
     .detail-item.info { background: #eff6ff; border-color: #bfdbfe; }
+    .clickable-card { cursor: pointer; transition: transform 0.1s ease, box-shadow 0.1s ease; }
+    .clickable-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-color: var(--primary); }
+
+    /* استایل تقویم ماهیانه */
+    .calendar-container { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .calendar-header-title { text-align: center; font-weight: bold; font-size: 1rem; color: var(--primary); margin-bottom: 12px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .calendar-day-name { font-size: 0.75rem; font-weight: bold; color: var(--text-muted); padding-bottom: 6px; }
+    .calendar-cell { font-size: 0.85rem; padding: 8px 0; border-radius: 6px; background: #f8fafc; color: var(--text-main); font-weight: 500; }
+    .calendar-cell.empty { background: transparent; }
+    .calendar-cell.today { background: var(--primary); color: white; font-weight: bold; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
 
     .boxes-container { display: flex; gap: 5px; direction: rtl; }
     .status-box { width: 24px; height: 24px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 13px; color: white; font-weight: bold; }
@@ -199,10 +210,20 @@
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
-      <!-- ویجت ساعت تهران و تقویم شمسی -->
-      <div class="card" style="text-align: center; background: #eff6ff; border-color: #bfdbfe; margin-bottom: 15px; padding: 12px;">
-        <div id="liveClock" style="font-size: 1.25rem; font-weight: bold; color: var(--primary); direction: ltr;">--:--:--</div>
-        <div id="shamsiCalendarDate" style="font-size: 0.9rem; color: var(--text-main); margin-top: 4px; font-weight: 600;">--</div>
+      <!-- ساعت زنده و تقویم ماهیانه استاندارد شمسی -->
+      <div class="calendar-container">
+        <div id="liveClock" style="text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); direction: ltr; margin-bottom: 6px;">--:--:--</div>
+        <div id="calendarMonthTitle" class="calendar-header-title">--</div>
+        <div class="calendar-grid">
+          <div class="calendar-day-name">ش</div>
+          <div class="calendar-day-name">ی</div>
+          <div class="calendar-day-name">د</div>
+          <div class="calendar-day-name">س</div>
+          <div class="calendar-day-name">چ</div>
+          <div class="calendar-day-name">پ</div>
+          <div class="calendar-day-name">ج</div>
+        </div>
+        <div id="calendarDaysGrid" class="calendar-grid" style="margin-top: 4px;"></div>
       </div>
 
       <div class="user-welcome-card">
@@ -532,7 +553,6 @@
       .trim();
   }
 
-  // محدودیت دسترسی پرسنل برای m.gishini (تولید، بسته بندی 2، مهمان و سایر)
   function isAllowedEmployee(empPosition, userEmail) {
     if (!userEmail) return false;
     const email = userEmail.toLowerCase();
@@ -542,22 +562,50 @@
     return true;
   }
 
-  // ساعت تهران و تقویم شمسی
+  // ساعت زنده تهران و تقویم ماهیانه استاندارد شمسی
   function updateTehranClockAndCalendar() {
     try {
       const now = new Date();
       const timeOptions = { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
       const timeStr = new Intl.DateTimeFormat('en-GB', timeOptions).format(now);
       const clockEl = document.getElementById('liveClock');
-      if (clockEl) clockEl.innerText = timeStr + ' (به وقت تهران)';
+      if (clockEl) clockEl.innerText = timeStr;
 
       const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(now);
       const [m, d, y] = tehranDateStr.split('/').map(Number);
       const shamsi = gregorianToShamsi(y, m, d);
       const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-      const calendarEl = document.getElementById('shamsiCalendarDate');
-      if (calendarEl) {
-        calendarEl.innerText = `امروز: ${shamsi.day} ${monthNames[parseInt(shamsi.month)-1]} ${shamsi.year}`;
+      
+      const titleEl = document.getElementById('calendarMonthTitle');
+      if (titleEl) titleEl.innerText = `${monthNames[parseInt(shamsi.month)-1]} ${shamsi.year}`;
+
+      // ساخت تقویم ماهیانه استاندارد
+      const gridEl = document.getElementById('calendarDaysGrid');
+      if (gridEl && !gridEl.hasChildNodes()) {
+        let daysInMonth = 31;
+        if (parseInt(shamsi.month) > 6 && parseInt(shamsi.month) < 12) daysInMonth = 30;
+        if (parseInt(shamsi.month) === 12) {
+          const isLeap = ((shamsi.year % 33) % 4 === 1);
+          daysInMonth = isLeap ? 30 : 29;
+        }
+
+        // محاسبه روز هفته برای روز اول ماه (تقویم تقریبی یا دقیق شمسی)
+        // تبدیل تاریخ اول ماه شمسی به میلادی برای گرفتن روز هفته
+        const firstDayGregorian = shamsiToGregorian(shamsi.year, shamsi.month, 1);
+        const firstDayObj = new Date(firstDayGregorian.gy, firstDayGregorian.gm - 1, firstDayGregorian.gd);
+        let jsDay = firstDayObj.getDay(); // 0: Sunday, 1: Monday, ... 6: Saturday
+        // تبدیل به ایندکس شمسی (شنبه = 0، یکشنبه = 1، ... جمعه = 6)
+        let startDayIndex = (jsDay + 1) % 7;
+
+        let html = '';
+        for (let i = 0; i < startDayIndex; i++) {
+          html += `<div class="calendar-cell empty"></div>`;
+        }
+        for (let day = 1; day <= daysInMonth; day++) {
+          let isToday = (day === parseInt(shamsi.day));
+          html += `<div class="calendar-cell ${isToday ? 'today' : ''}">${day}</div>`;
+        }
+        gridEl.innerHTML = html;
       }
     } catch(e) {}
   }
@@ -683,7 +731,7 @@
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(tabId).classList.remove('hidden');
     document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
 
     document.querySelectorAll('.search-input').forEach(input => { input.value = ''; });
     if(tabId === 'tabLeave') {
@@ -1140,13 +1188,13 @@
       } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
       
       containerStats.innerHTML = `
-        <div class="detail-item info" style="text-align:center;">
+        <div class="detail-item info clickable-card" style="text-align:center;" onclick="switchTab('tabEmployees', document.querySelectorAll('.tab-item')[4])">
           <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--primary);">${employees ? employees.length : 0}</span>
-          <strong>کل پرسنل</strong>
+          <strong>کل پرسنل 👥</strong>
         </div>
-        <div class="detail-item warning" style="text-align:center;">
+        <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[5])">
           <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span>
-          <strong>کل سوابق</strong>
+          <strong>کل سوابق 📋</strong>
         </div>
         <div class="detail-item danger" style="text-align:center;">
           <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--danger);">${activeToday.length}</span>
@@ -1160,7 +1208,6 @@
     }
   }
 
-  // تفکیک نیروها بر اساس شغل در صفحه وضعیت ماهانه
   async function loadMonthlyStatus() {
     const container = document.getElementById('monthlyStatusList');
     container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
@@ -1400,7 +1447,6 @@
 
   function closeEditRecordModal() { document.getElementById('editRecordModal').classList.add('hidden'); }
 
-  // اصلاح قطعی ویرایش مرخصی (جلوگیری از ایجاد رکورد تکراری و آپدیت دقیق)
   document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('editRecordStatus');
