@@ -214,7 +214,6 @@
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
-      <!-- ساعت زنده و تقویم ماهیانه استاندارد شمسی -->
       <div class="calendar-container">
         <div id="liveClock" style="text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); direction: ltr; margin-bottom: 6px;">--:--:--</div>
         <div id="calendarMonthTitle" class="calendar-header-title">--</div>
@@ -256,7 +255,7 @@
       
       <!-- منوی افقی انتخاب ماه‌ها -->
       <div class="month-filters" id="statusMonthFilters" style="margin-bottom: 10px;">
-        <button type="button" class="month-btn active" onclick="filterStatusByMonth('01', this)">فروردین</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('01', this)">فروردین</button>
         <button type="button" class="month-btn" onclick="filterStatusByMonth('02', this)">اردیبهشت</button>
         <button type="button" class="month-btn" onclick="filterStatusByMonth('03', this)">خرداد</button>
         <button type="button" class="month-btn" onclick="filterStatusByMonth('04', this)">تیر</button>
@@ -613,7 +612,6 @@
     }
   }
 
-  // ساعت زنده و تقویم ماهیانه استاندارد شمسی
   function updateTehranClockAndCalendar() {
     try {
       const now = new Date();
@@ -686,7 +684,6 @@
       document.getElementById('rememberMe').checked = true;
     }
     
-    // تنظیم پیش‌فرض منوی ماه در صفحه وضعیت به ماه جاری شمسی
     const today = new Date();
     const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(today);
     const [m, d, y] = tehranDateStr.split('/').map(Number);
@@ -756,7 +753,7 @@
   let allEmployeesData = [];
   window.currentJobFilter = 'all';
   window.currentStatusJobFilter = 'all';
-  window.currentStatusMonth = '01';
+  window.currentStatusMonth = '06'; // پیش‌فرض شهریور (یا بر اساس تاریخ روز تنظیم می‌شود)
   window.currentSearchQuery = '';
   window.currentMonthFilter = 'all';
 
@@ -1188,7 +1185,7 @@
         if(catFilters) catFilters.style.display = 'flex';
       }
 
-      await loadEmployeesList(); loadDashboard();
+      await loadEmployeesList(); loadDashboard(); loadMonthlyStatus();
     } else {
       document.getElementById('loginSection').classList.remove('hidden');
       document.getElementById('appSection').classList.add('hidden');
@@ -1303,456 +1300,6 @@
       `;
     }
   }
-
-  // گسترش مرخصی‌ها به تفکیک روزهای بازه و محدودسازی به 7 مربع با نمایش تاریخ روز زیر آن
-  async function loadMonthlyStatus() {
-    const container = document.getElementById('monthlyStatusList');
-    container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
-    
-    const { data: { session } } = await client.auth.getSession();
-    const userEmail = session ? session.user.email : '';
-
-    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
-    const { data: records } = await client.from('leave_records').select('*');
-    if (!employees || employees.length === 0) {
-      container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>پرسنلی ثبت نشده است.</p>";
-      return;
-    }
-
-    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
-    employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
-
-    const today = new Date();
-    const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(today);
-    const [tm, td, ty] = tehranDateStr.split('/').map(Number);
-    const currentShamsiToday = gregorianToShamsi(ty, tm, td);
-
-    const selectedMonth = window.currentStatusMonth || currentShamsiToday.month;
-    const currentYear = currentShamsiToday.year;
-    
-    const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-    document.getElementById('currentMonthLabel').innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(selectedMonth) - 1]} ${currentYear}</span>`;
-
-    let grouped = {};
-    employees.forEach(emp => {
-      let pos = emp.position || 'سایر';
-      if (!grouped[pos]) grouped[pos] = [];
-      grouped[pos].push(emp);
-    });
-
-    let html = '';
-    const positionsOrder = ['بسته بندی 1', 'بسته بندی 2', 'تولید', 'فنی', 'برق', 'اداری و مدیریت', 'مهمان', 'سایر'];
-    let sortedPositions = Object.keys(grouped).sort((a, b) => {
-      let idxA = positionsOrder.indexOf(a);
-      let idxB = positionsOrder.indexOf(b);
-      if (idxA === -1) idxA = 99;
-      if (idxB === -1) idxB = 99;
-      return idxA - idxB;
-    });
-
-    sortedPositions.forEach(pos => {
-      let displayStyle = (window.currentStatusJobFilter === 'all' || window.currentStatusJobFilter === pos) ? '' : 'display:none;';
-      html += `<div data-pos-group="${pos}" style="${displayStyle}">`;
-      html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos}</div>`;
-      
-      grouped[pos].forEach(emp => {
-        const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
-        
-        // استخراج روزهای مرخصی در ماه انتخابی (گسترش بازه‌های چندروزه)
-        let dailyLeavesMap = {}; // کلید: روز شمسی، مقدار: نوع رکورد
-        
-        empRecords.forEach(rec => {
-          let sDate = new Date(rec.start_at);
-          let eDate = new Date(rec.end_at);
-          
-          let curr = new Date(sDate.getTime());
-          while (curr <= eDate) {
-            let gY = curr.getFullYear();
-            let gM = curr.getMonth() + 1;
-            let gD = curr.getDate();
-            let sObj = gregorianToShamsi(gY, gM, gD);
-            
-            if (sObj.year == currentYear && sObj.month == selectedMonth) {
-              dailyLeavesMap[parseInt(sObj.day)] = rec.record_type;
-            }
-            curr.setDate(curr.getDate() + 1);
-          }
-        });
-
-        // تعیین 7 روز برای نمایش (اگر امروز در این ماه است، امروز و ۶ روز قبل؛ وگرنه از روز اول ماه)
-        let targetDay = (selectedMonth === currentShamsiToday.month) ? parseInt(currentShamsiToday.day) : 1;
-        let startDay = Math.max(1, targetDay - 6);
-        let endDay = startDay + 6;
-
-        let boxesHtml = '';
-        for (let day = startDay; day <= endDay; day++) {
-          let dayStr = String(day).padStart(2, '0');
-          let recType = dailyLeavesMap[day];
-          if (recType) {
-            let colorClass = '';
-            switch(recType) {
-              case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
-              case 'hourly_leave': colorClass = 'box-green'; break;
-              case 'sick_leave': colorClass = 'box-orange'; break;
-              case 'official_holiday': colorClass = 'box-black'; break;
-              case 'absence': colorClass = 'box-red'; break;
-              case 'other': colorClass = 'box-purple'; break;
-            }
-            boxesHtml += `<div class="status-box-wrap"><div class="status-box ${colorClass || 'box-blue'}">✔</div><span class="box-date">${day} ${monthNames[parseInt(selectedMonth)-1].substring(0,3)}</span></div>`;
-          } else {
-            boxesHtml += `<div class="status-box-wrap"><div class="status-box empty"></div><span class="box-date">${day} ${monthNames[parseInt(selectedMonth)-1].substring(0,3)}</span></div>`;
-          }
-        }
-
-        const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-        html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small></div><div class="boxes-container">${boxesHtml}</div></div>`;
-      });
-      html += `</div>`;
-    });
-
-    container.innerHTML = html || "<p style='text-align:center; color:var(--text-muted);'>پرسنلی یافت نشد.</p>";
-  }
-
-  document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const { data: { session } } = await client.auth.getSession();
-    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
-      alert("شما به این بخش دسترسی ندارید.");
-      return;
-    }
-
-    let pCode = document.getElementById('empPersonnelCode').value.trim();
-    if (pCode === "") pCode = null;
-    const { error } = await client.from('employees').insert([{ personnel_code: pCode, full_name: document.getElementById('empFullName').value, position: document.getElementById('empPosition').value }]);
-    if (!error) { 
-      document.getElementById('addEmployeeForm').reset(); 
-      toggleAddEmployeeForm();
-      loadEmployeesList(); 
-    }
-    else alert("خطا: " + error.message);
-  });
-
-  async function loadEmployeesList() {
-    let { data } = await client.from('employees').select('*');
-    const { data: { session } } = await client.auth.getSession();
-    const userEmail = session ? session.user.email : '';
-    const isAdmin = session && userEmail.toLowerCase() === 'amin.se7en92@gmail.com';
-
-    if (data) {
-      data = data.filter(e => isAllowedEmployee(e.position, userEmail));
-    }
-
-    const select = document.getElementById('employeeSelect'); const manageList = document.getElementById('employeesManageList');
-    if (data && data.length > 0) {
-      data.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
-      allEmployeesData = data;
-      
-      select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => {
-        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
-        return `<option value="${e.id}">${e.full_name}${codeText}</option>`;
-      }).join('');
-      
-      manageList.innerHTML = data.map(e => {
-        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
-        const actionsHtml = isAdmin ? `<div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div>` : '';
-        return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div>${actionsHtml}</div>`;
-      }).join('');
-    } else {
-      allEmployeesData = []; select.innerHTML = `<option value="">بدون پرسنل</option>`; manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
-    }
-  }
-
-  function openEditEmployeeModal(id, code, name, pos) {
-    document.getElementById('editEmpId').value = id; document.getElementById('editEmpPersonnelCode').value = code==='null'?'':code; document.getElementById('editEmpFullName').value = name; 
-    const posSelect = document.getElementById('editEmpPosition');
-    let posExists = Array.from(posSelect.options).some(opt => opt.value === pos);
-    posSelect.value = posExists ? pos : 'سایر';
-    document.getElementById('editEmployeeModal').classList.remove('hidden');
-  }
-  function closeEditEmployeeModal() { document.getElementById('editEmployeeModal').classList.add('hidden'); }
-
-  document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const { data: { session } } = await client.auth.getSession();
-    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
-      alert("شما به این بخش دسترسی ندارید.");
-      return;
-    }
-
-    let pCode = document.getElementById('editEmpPersonnelCode').value.trim();
-    if (pCode === "") pCode = null;
-    await client.from('employees').update({ personnel_code: pCode, full_name: document.getElementById('editEmpFullName').value, position: document.getElementById('editEmpPosition').value }).eq('id', document.getElementById('editEmpId').value);
-    closeEditEmployeeModal(); loadEmployeesList();
-  });
-
-  async function deleteEmployee(id, name) {
-    const { data: { session } } = await client.auth.getSession();
-    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
-      alert("شما به این بخش دسترسی ندارید.");
-      return;
-    }
-
-    if (confirm(`حذف ${name} و سوابقش؟`)) { await client.from('leave_records').delete().eq('employee_id', id); await client.from('employees').delete().eq('id', id); loadEmployeesList(); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); }
-  }
-
-  document.getElementById('leaveForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const status = document.getElementById('leaveStatus');
-    const submitBtn = document.getElementById('submitLeaveBtn');
-    
-    if (!document.getElementById('endDateManual').value) {
-        document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
-    }
-
-    const recordType = document.getElementById('recordType').value;
-    
-    const startTimeInput = document.getElementById('startTimeManual');
-    const endTimeInput = document.getElementById('endTimeManual');
-    const wasDisabled = startTimeInput.disabled;
-    
-    startTimeInput.disabled = false;
-    endTimeInput.disabled = false;
-
-    const startObj = parseManualInputToDate('startDateManual', 'startTimeManual');
-    const endObj = parseManualInputToDate('endDateManual', 'endTimeManual');
-
-    if (wasDisabled) {
-      startTimeInput.disabled = true;
-      endTimeInput.disabled = true;
-    }
-    
-    if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است (مثال: 1403/06/12)."; return; }
-    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
-
-    const selectedEmpId = document.getElementById('employeeSelect').value;
-
-    if (!selectedEmpId) {
-      status.style.color = "var(--danger)";
-      status.innerText = "لطفاً یک پرسنل از لیست انتخاب کنید.";
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.innerText = "در حال ثبت...";
-    status.style.color = "var(--primary)";
-    status.innerText = "⏳ در حال ارسال به سرور...";
-
-    const { error } = await client.from('leave_records').insert([{ 
-      employee_id: selectedEmpId, 
-      record_type: recordType, 
-      start_at: startObj.toISOString(), 
-      end_at: endObj.toISOString(), 
-      note: document.getElementById('note').value 
-    }]);
-
-    if (!error) { 
-      status.style.color = "var(--success)"; 
-      status.innerText = "✅ مرخصی با موفقیت ثبت شد! می‌توانید شخص بعدی را ثبت کنید."; 
-      
-      document.getElementById('leaveForm').reset();
-      handleRecordTypeChange();
-      filterLeaveSelect('');
-      
-      loadDashboard(); 
-      loadMonthlyStatus(); 
-    } else { 
-      status.style.color = "var(--danger)"; 
-      status.innerText = "خطا در ثبت: " + error.message; 
-    }
-
-    submitBtn.disabled = false;
-    submitBtn.innerText = "ثبت نهایی مرخصی";
-  });
-
-  function openEditRecordModal(id, type, start, end, note) {
-    document.getElementById('editRecordId').value = id;
-    document.getElementById('editRecordType').value = type;
-    
-    const sd = new Date(start); const ed = new Date(end);
-    const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
-    const eShamsi = gregorianToShamsi(ed.getFullYear(), ed.getMonth()+1, ed.getDate());
-    
-    document.getElementById('editStartDateManual').value = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`;
-    document.getElementById('editStartTimeManual').value = String(sd.getHours()).padStart(2,'0') + ':' + String(sd.getMinutes()).padStart(2,'0');
-    document.getElementById('editEndDateManual').value = `${eShamsi.year}/${String(eShamsi.month).padStart(2,'0')}/${String(eShamsi.day).padStart(2,'0')}`;
-    document.getElementById('editEndTimeManual').value = String(ed.getHours()).padStart(2,'0') + ':' + String(ed.getMinutes()).padStart(2,'0');
-    document.getElementById('editNote').value = (note && note !== 'null') ? note : '';
-    
-    document.getElementById('editRecordModal').classList.remove('hidden');
-  }
-
-  function closeEditRecordModal() { document.getElementById('editRecordModal').classList.add('hidden'); }
-
-  document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const status = document.getElementById('editRecordStatus');
-    status.style.color = "var(--primary)";
-    status.innerText = "در حال ذخیره تغییرات...";
-    
-    if (!document.getElementById('editEndDateManual').value) {
-        document.getElementById('editEndDateManual').value = document.getElementById('editStartDateManual').value;
-    }
-
-    const startObj = parseManualInputToDate('editStartDateManual', 'editStartTimeManual');
-    const endObj = parseManualInputToDate('editEndDateManual', 'editEndTimeManual');
-    
-    if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ یا ساعت اشتباه است."; return; }
-    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
-    
-    const recordId = document.getElementById('editRecordId').value;
-    if (!recordId) {
-      status.style.color = "var(--danger)";
-      status.innerText = "شناسه رکورد نامعتبر است.";
-      return;
-    }
-
-    const { error } = await client.from('leave_records').update({
-      record_type: document.getElementById('editRecordType').value,
-      start_at: startObj.toISOString(),
-      end_at: endObj.toISOString(),
-      note: document.getElementById('editNote').value
-    }).eq('id', recordId);
-    
-    if (!error) { 
-        status.style.color = "var(--success)";
-        status.innerText = "تغییرات با موفقیت ذخیره شد!";
-        setTimeout(() => {
-          closeEditRecordModal(); 
-          loadRecords(); 
-          loadDashboard(); 
-          loadMonthlyStatus(); 
-          loadRemainingLeave();
-          status.innerText = "";
-        }, 500);
-    } else {
-        status.style.color = "var(--danger)";
-        status.innerText = "خطا در ویرایش: " + error.message;
-    }
-  });
-
-  function getBadgeClass(type) {
-    switch(type) {
-      case 'daily_leave': case 'daily': return 'badge-blue';
-      case 'hourly_leave': return 'badge-green';
-      case 'sick_leave': return 'badge-orange';
-      case 'official_holiday': return 'badge-black';
-      case 'absence': return 'badge-red';
-      case 'other': return 'badge-purple';
-      default: return 'badge-blue';
-    }
-  }
-
-  async function loadRemainingLeave() {
-    const container = document.getElementById('remainingList');
-    
-    const { data: { session } } = await client.auth.getSession();
-    const userEmail = session ? session.user.email : '';
-
-    let { data: employees } = await client.from('employees').select('*'); 
-    const { data: records } = await client.from('leave_records').select('*');
-    if (!employees || employees.length === 0) return;
-
-    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
-    employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
-
-    container.innerHTML = employees.map(emp => {
-      let dM=0, hM=0, sM=0, holM=0, aM=0, otherM=0;
-      (records || []).filter(r=>r.employee_id===emp.id).forEach(rec => {
-        const diff = Math.max(0, Math.floor((new Date(rec.end_at)-new Date(rec.start_at))/60000));
-        const days = Math.max(1, Math.ceil(diff/1440));
-        switch(rec.record_type) {
-          case 'daily_leave': case 'daily': dM += days*WORK_DAY_MINUTES; break;
-          case 'hourly_leave': hM += diff; break;
-          case 'sick_leave': sM += days*WORK_DAY_MINUTES; break;
-          case 'official_holiday': holM += days*WORK_DAY_MINUTES; break;
-          case 'absence': aM += days*WORK_DAY_MINUTES; break;
-          case 'other': otherM += diff; break;
-        }
-      });
-      const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
-      const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-      
-      return `<div class="leave-summary-card" data-name="${emp.full_name} ${emp.personnel_code || ''}" style="display:none;">
-        <div class="leave-summary-header"><strong>${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
-        <div class="detail-grid">
-            <div class="detail-item"><strong>روزانه:</strong><br>${formatWorkDaysAndHours(dM).daysText}</div>
-            <div class="detail-item"><strong>ساعتی:</strong><br>${formatHoursAndMinutes(hM)}</div>
-            <div class="detail-item warning"><strong>استعلاجی:</strong><br>${formatWorkDaysAndHours(sM).daysText}</div>
-            <div class="detail-item danger"><strong>غیبت:</strong><br>${formatWorkDaysAndHours(aM).daysText}</div>
-            <div class="detail-item info" style="background:#f3e8ff; border-color:#d8b4fe;"><strong>سایر:</strong><br>${formatHoursAndMinutes(otherM)}</div>
-            <div class="detail-item" style="background:#f8fafc; border-color:#cbd5e1; text-align:center;">
-                <strong>تعطیل رسمی:</strong><br>${formatWorkDaysAndHours(holM).daysText}
-            </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  async function loadRecords() {
-    const list = document.getElementById('recordsList');
-    
-    const { data: { session } } = await client.auth.getSession();
-    const userEmail = session ? session.user.email : '';
-
-    let { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)').order('start_at', { ascending: false });
-    
-    if (data) {
-      data = data.filter(r => r.employees && isAllowedEmployee(r.employees.position, userEmail));
-
-      let html = data.map(r => {
-        const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
-        const emp = r.employees;
-        const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-        
-        const sd = new Date(r.start_at);
-        const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
-        const dateStr = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`; 
-        const dateStrNoZero = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`; 
-        
-        const searchData = `${emp ? emp.full_name : ''} ${emp ? emp.personnel_code : ''} ${dateStr} ${dateStrNoZero}`;
-        const recordMonth = String(sShamsi.month);
-
-        const badgeClass = getBadgeClass(r.record_type);
-        const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
-        const creatorName = getPersianName(r.created_by);
-
-        return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}" data-creator="${creatorName}">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <div>
-              <strong>${emp ? emp.full_name : 'نامشخص'}</strong>
-              <small style="color:var(--text-muted);">${codeText}</small>
-            </div>
-            <span class="record-type-badge ${badgeClass}">${typeLabel}</span>
-          </div>
-          <div style="margin-top: 8px;"><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small></div>
-          <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">ثبت شده توسط: <strong>${creatorName}</strong></div>
-          <div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div>
-        </div>`;
-      }).join('');
-
-      list.innerHTML = html;
-      applyRecordsFilters();
-    }
-  }
-
-  async function deleteRecord(id) { if(confirm("حذف رکورد مرخصی تایید شود؟")) { await client.from('leave_records').delete().eq('id', id); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); } }
-
-  function formatHoursAndMinutes(totalMinutes) {
-    if (!totalMinutes || totalMinutes <= 0) return '۰ ساعت و ۰ دقیقه';
-    const hours = Math.floor(totalMinutes / 60); const mins = Math.floor(totalMinutes % 60);
-    let parts = []; if (hours > 0) parts.push(`${hours} ساعت`); if (mins > 0) parts.push(`${mins} دقیقه`);
-    return parts.length > 0 ? parts.join(' و ') : '۰ دقیقه';
-  }
-
-  function formatWorkDaysAndHours(totalMinutes) {
-    if (!totalMinutes || totalMinutes <= 0) return { daysText: '۰ روز کاری', totalHoursText: '۰ ساعت و ۰ دقیقه' };
-    const days = Math.floor(totalMinutes / WORK_DAY_MINUTES); const remMinutesAfterDays = totalMinutes % WORK_DAY_MINUTES;
-    const remHours = Math.floor(remMinutesAfterDays / 60); const remMins = Math.floor(remMinutesAfterDays % 60);
-    let dayParts = []; if (days > 0) dayParts.push(`${days} روز`); if (remHours > 0) dayParts.push(`${remHours} ساعت`); if (remMins > 0) dayParts.push(`${remMins} دقیقه`);
-    return { daysText: dayParts.length > 0 ? dayParts.join(' و ') : '۰ روز', totalHoursText: formatHoursAndMinutes(totalMinutes) };
-  }
-
-  init();
 </script>
 </body>
 </html>
