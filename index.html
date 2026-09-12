@@ -118,6 +118,7 @@
     .badge-orange { background: var(--warning); }
     .badge-black { background: var(--black-accent); }
     .badge-red { background: var(--danger); }
+    .badge-purple { background: #8b5cf6; }
 
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 0.85rem; }
     .detail-item { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.6; }
@@ -134,6 +135,8 @@
     .box-orange { background: var(--warning); }
     .box-black { background: var(--black-accent); }
     .box-red { background: var(--danger); }
+    .box-purple { background: #8b5cf6; }
+
     .status-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; font-size: 0.75rem; }
     .legend-item { display: flex; align-items: center; gap: 5px; }
     .legend-color { width: 12px; height: 12px; border-radius: 3px; }
@@ -196,6 +199,12 @@
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
+      <!-- ویجت ساعت تهران و تقویم شمسی -->
+      <div class="card" style="text-align: center; background: #eff6ff; border-color: #bfdbfe; margin-bottom: 15px; padding: 12px;">
+        <div id="liveClock" style="font-size: 1.25rem; font-weight: bold; color: var(--primary); direction: ltr;">--:--:--</div>
+        <div id="shamsiCalendarDate" style="font-size: 0.9rem; color: var(--text-main); margin-top: 4px; font-weight: 600;">--</div>
+      </div>
+
       <div class="user-welcome-card">
         <span>👤 کاربر وارد شده: <strong id="currentLoggedInUser" style="color:var(--primary);">...</strong></span>
         <button type="button" onclick="handleLogout()" style="margin:0; width:auto; padding:6px 12px; font-size:0.75rem; background:#fee2e2; color:var(--danger); border-radius:6px;">خروج</button>
@@ -225,6 +234,7 @@
         <div class="legend-item"><div class="legend-color box-black"></div>تعطیل رسمی</div>
         <div class="legend-item"><div class="legend-color box-orange"></div>استعلاجی</div>
         <div class="legend-item"><div class="legend-color box-red"></div>غیبت</div>
+        <div class="legend-item"><div class="legend-color box-purple"></div>سایر</div>
       </div>
       <div id="monthlyStatusList">در حال دریافت...</div>
     </div>
@@ -247,6 +257,7 @@
               <option value="sick_leave">استعلاجی</option>
               <option value="official_holiday">تعطیل رسمی</option>
               <option value="absence">غیبت</option>
+              <option value="other">سایر (بدون کسر از سهمیه)</option>
             </select>
           </div>
           
@@ -442,6 +453,7 @@
           <option value="sick_leave">استعلاجی</option>
           <option value="official_holiday">تعطیل رسمی</option>
           <option value="absence">غیبت</option>
+          <option value="other">سایر (بدون کسر از سهمیه)</option>
         </select>
       </div>
       
@@ -520,7 +532,7 @@
       .trim();
   }
 
-  // تابع بررسی دسترسی کاربر به پرسنل (تولید، بسته بندی 2، مهمان و سایر برای m.gishini)
+  // محدودیت دسترسی پرسنل برای m.gishini (تولید، بسته بندی 2، مهمان و سایر)
   function isAllowedEmployee(empPosition, userEmail) {
     if (!userEmail) return false;
     const email = userEmail.toLowerCase();
@@ -529,6 +541,27 @@
     }
     return true;
   }
+
+  // ساعت تهران و تقویم شمسی
+  function updateTehranClockAndCalendar() {
+    try {
+      const now = new Date();
+      const timeOptions = { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+      const timeStr = new Intl.DateTimeFormat('en-GB', timeOptions).format(now);
+      const clockEl = document.getElementById('liveClock');
+      if (clockEl) clockEl.innerText = timeStr + ' (به وقت تهران)';
+
+      const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(now);
+      const [m, d, y] = tehranDateStr.split('/').map(Number);
+      const shamsi = gregorianToShamsi(y, m, d);
+      const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+      const calendarEl = document.getElementById('shamsiCalendarDate');
+      if (calendarEl) {
+        calendarEl.innerText = `امروز: ${shamsi.day} ${monthNames[parseInt(shamsi.month)-1]} ${shamsi.year}`;
+      }
+    } catch(e) {}
+  }
+  setInterval(updateTehranClockAndCalendar, 1000);
 
   const dateInputs = ['startDateManual', 'endDateManual', 'editStartDateManual', 'editEndDateManual', 'reportStartDate', 'reportEndDate', 'filterStartDate', 'filterEndDate'];
   dateInputs.forEach(id => {
@@ -558,6 +591,7 @@
       document.getElementById('rememberMe').checked = true;
     }
     handleRecordTypeChange();
+    updateTehranClockAndCalendar();
   });
 
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -618,7 +652,8 @@
     'hourly_leave': 'مرخصی ساعتی', 
     'sick_leave': 'استعلاجی', 
     'official_holiday': 'تعطیل رسمی', 
-    'absence': 'غیبت'
+    'absence': 'غیبت',
+    'other': 'سایر'
   };
 
   function handleRecordTypeChange() {
@@ -937,11 +972,10 @@
     if (!employees || employees.length === 0) return;
 
     employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
-
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
     let csvContent = '\uFEFF';
-    csvContent += "کد پرسنلی,نام و نام خانوادگی,محل کار,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,مانده (روز),مانده (ساعت)\n";
+    csvContent += "کد پرسنلی,نام و نام خانوادگی,محل کار,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,سایر,مانده (روز),مانده (ساعت)\n";
 
     employees.forEach(emp => {
       let empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
@@ -955,7 +989,7 @@
         });
       }
 
-      let dM=0, hM=0, sM=0, holM=0, aM=0;
+      let dM=0, hM=0, sM=0, holM=0, aM=0, otherM=0;
       empRecords.forEach(rec => {
         const diffMinutes = Math.max(0, Math.floor((new Date(rec.end_at) - new Date(rec.start_at)) / 60000));
         switch(rec.record_type) {
@@ -964,12 +998,13 @@
           case 'sick_leave': sM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
           case 'official_holiday': holM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
           case 'absence': aM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'other': otherM += diffMinutes; break;
         }
       });
       const usedMinutes = dM + hM;
       const remMinutes = Math.max(0, TOTAL_ANNUAL_MINUTES - usedMinutes);
       const remFormatted = formatWorkDaysAndHours(remMinutes);
-      csvContent += `${emp.personnel_code || '---'},${emp.full_name},${emp.position || '---'},${formatHoursAndMinutes(dM)},${formatHoursAndMinutes(hM)},${formatHoursAndMinutes(sM)},${formatHoursAndMinutes(holM)},${formatHoursAndMinutes(aM)},${remFormatted.daysText},${remFormatted.totalHoursText}\n`;
+      csvContent += `${emp.personnel_code || '---'},${emp.full_name},${emp.position || '---'},${formatHoursAndMinutes(dM)},${formatHoursAndMinutes(hM)},${formatHoursAndMinutes(sM)},${formatHoursAndMinutes(holM)},${formatHoursAndMinutes(aM)},${formatHoursAndMinutes(otherM)},${remFormatted.daysText},${remFormatted.totalHoursText}\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1125,6 +1160,7 @@
     }
   }
 
+  // تفکیک نیروها بر اساس شغل در صفحه وضعیت ماهانه
   async function loadMonthlyStatus() {
     const container = document.getElementById('monthlyStatusList');
     container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
@@ -1134,7 +1170,10 @@
 
     let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
     const { data: records } = await client.from('leave_records').select('*');
-    if (!employees || employees.length === 0) return;
+    if (!employees || employees.length === 0) {
+      container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>پرسنلی ثبت نشده است.</p>";
+      return;
+    }
 
     employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
@@ -1144,33 +1183,55 @@
     const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
     document.getElementById('currentMonthLabel').innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(currentShamsi.month) - 1]} ${currentShamsi.year}</span>`;
 
-    let html = '';
+    let grouped = {};
     employees.forEach(emp => {
-      const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
-      const currentMonthRecords = empRecords.filter(rec => {
-        const recDate = new Date(rec.start_at);
-        const recShamsi = gregorianToShamsi(recDate.getFullYear(), recDate.getMonth() + 1, recDate.getDate());
-        return recShamsi.year == currentShamsi.year && recShamsi.month == currentShamsi.month;
-      }).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
-
-      let boxesHtml = '';
-      for (let i = 0; i < 6; i++) {
-        if (i < currentMonthRecords.length) {
-          let colorClass = '';
-          switch(currentMonthRecords[i].record_type) {
-            case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
-            case 'hourly_leave': colorClass = 'box-green'; break;
-            case 'sick_leave': colorClass = 'box-orange'; break;
-            case 'official_holiday': colorClass = 'box-black'; break;
-            case 'absence': colorClass = 'box-red'; break;
-          }
-          boxesHtml += `<div class="status-box ${colorClass}">✔</div>`;
-        } else boxesHtml += `<div class="status-box empty"></div>`;
-      }
-      const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-      html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted);">${emp.position || 'سایر'}</div></div><div class="boxes-container">${boxesHtml}</div></div>`;
+      let pos = emp.position || 'سایر';
+      if (!grouped[pos]) grouped[pos] = [];
+      grouped[pos].push(emp);
     });
-    container.innerHTML = html;
+
+    let html = '';
+    const positionsOrder = ['بسته بندی 1', 'بسته بندی 2', 'تولید', 'فنی', 'برق', 'اداری و مدیریت', 'مهمان', 'سایر'];
+    let sortedPositions = Object.keys(grouped).sort((a, b) => {
+      let idxA = positionsOrder.indexOf(a);
+      let idxB = positionsOrder.indexOf(b);
+      if (idxA === -1) idxA = 99;
+      if (idxB === -1) idxB = 99;
+      return idxA - idxB;
+    });
+
+    sortedPositions.forEach(pos => {
+      html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos}</div>`;
+      
+      grouped[pos].forEach(emp => {
+        const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+        const currentMonthRecords = empRecords.filter(rec => {
+          const recDate = new Date(rec.start_at);
+          const recShamsi = gregorianToShamsi(recDate.getFullYear(), recDate.getMonth() + 1, recDate.getDate());
+          return recShamsi.year == currentShamsi.year && recShamsi.month == currentShamsi.month;
+        }).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+
+        let boxesHtml = '';
+        for (let i = 0; i < 6; i++) {
+          if (i < currentMonthRecords.length) {
+            let colorClass = '';
+            switch(currentMonthRecords[i].record_type) {
+              case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
+              case 'hourly_leave': colorClass = 'box-green'; break;
+              case 'sick_leave': colorClass = 'box-orange'; break;
+              case 'official_holiday': colorClass = 'box-black'; break;
+              case 'absence': colorClass = 'box-red'; break;
+              case 'other': colorClass = 'box-purple'; break;
+            }
+            boxesHtml += `<div class="status-box ${colorClass || 'box-blue'}">✔</div>`;
+          } else boxesHtml += `<div class="status-box empty"></div>`;
+        }
+        const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+        html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small></div><div class="boxes-container">${boxesHtml}</div></div>`;
+      });
+    });
+
+    container.innerHTML = html || "<p style='text-align:center; color:var(--text-muted);'>پرسنلی یافت نشد.</p>";
   }
 
   document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
@@ -1339,10 +1400,12 @@
 
   function closeEditRecordModal() { document.getElementById('editRecordModal').classList.add('hidden'); }
 
+  // اصلاح قطعی ویرایش مرخصی (جلوگیری از ایجاد رکورد تکراری و آپدیت دقیق)
   document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('editRecordStatus');
-    status.innerText = "در حال ذخیره...";
+    status.style.color = "var(--primary)";
+    status.innerText = "در حال ذخیره تغییرات...";
     
     if (!document.getElementById('editEndDateManual').value) {
         document.getElementById('editEndDateManual').value = document.getElementById('editStartDateManual').value;
@@ -1351,21 +1414,36 @@
     const startObj = parseManualInputToDate('editStartDateManual', 'editStartTimeManual');
     const endObj = parseManualInputToDate('editEndDateManual', 'editEndTimeManual');
     
-    if (!startObj || !endObj) { status.innerText = "فرمت تاریخ یا ساعت اشتباه است."; return; }
-    if (endObj <= startObj) { status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
+    if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ یا ساعت اشتباه است."; return; }
+    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
     
+    const recordId = document.getElementById('editRecordId').value;
+    if (!recordId) {
+      status.style.color = "var(--danger)";
+      status.innerText = "شناسه رکورد نامعتبر است.";
+      return;
+    }
+
     const { error } = await client.from('leave_records').update({
       record_type: document.getElementById('editRecordType').value,
       start_at: startObj.toISOString(),
       end_at: endObj.toISOString(),
       note: document.getElementById('editNote').value
-    }).eq('id', document.getElementById('editRecordId').value);
+    }).eq('id', recordId);
     
     if (!error) { 
-        closeEditRecordModal(); 
-        loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave();
-        status.innerText = "";
+        status.style.color = "var(--success)";
+        status.innerText = "تغییرات با موفقیت ذخیره شد!";
+        setTimeout(() => {
+          closeEditRecordModal(); 
+          loadRecords(); 
+          loadDashboard(); 
+          loadMonthlyStatus(); 
+          loadRemainingLeave();
+          status.innerText = "";
+        }, 500);
     } else {
+        status.style.color = "var(--danger)";
         status.innerText = "خطا در ویرایش: " + error.message;
     }
   });
@@ -1377,6 +1455,7 @@
       case 'sick_leave': return 'badge-orange';
       case 'official_holiday': return 'badge-black';
       case 'absence': return 'badge-red';
+      case 'other': return 'badge-purple';
       default: return 'badge-blue';
     }
   }
@@ -1395,7 +1474,7 @@
     employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
 
     container.innerHTML = employees.map(emp => {
-      let dM=0, hM=0, sM=0, holM=0, aM=0;
+      let dM=0, hM=0, sM=0, holM=0, aM=0, otherM=0;
       (records || []).filter(r=>r.employee_id===emp.id).forEach(rec => {
         const diff = Math.max(0, Math.floor((new Date(rec.end_at)-new Date(rec.start_at))/60000));
         const days = Math.max(1, Math.ceil(diff/1440));
@@ -1405,6 +1484,7 @@
           case 'sick_leave': sM += days*WORK_DAY_MINUTES; break;
           case 'official_holiday': holM += days*WORK_DAY_MINUTES; break;
           case 'absence': aM += days*WORK_DAY_MINUTES; break;
+          case 'other': otherM += diff; break;
         }
       });
       const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
@@ -1417,7 +1497,8 @@
             <div class="detail-item"><strong>ساعتی:</strong><br>${formatHoursAndMinutes(hM)}</div>
             <div class="detail-item warning"><strong>استعلاجی:</strong><br>${formatWorkDaysAndHours(sM).daysText}</div>
             <div class="detail-item danger"><strong>غیبت:</strong><br>${formatWorkDaysAndHours(aM).daysText}</div>
-            <div class="detail-item" style="background:#f8fafc; border-color:#cbd5e1; grid-column: span 2; text-align:center;">
+            <div class="detail-item info" style="background:#f3e8ff; border-color:#d8b4fe;"><strong>سایر:</strong><br>${formatHoursAndMinutes(otherM)}</div>
+            <div class="detail-item" style="background:#f8fafc; border-color:#cbd5e1; text-align:center;">
                 <strong>تعطیل رسمی:</strong><br>${formatWorkDaysAndHours(holM).daysText}
             </div>
         </div>
