@@ -210,7 +210,7 @@
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
-      <!-- ساعت زنده تهران و تقویم ماهیانه استاندارد شمسی -->
+      <!-- ساعت زنده و تقویم ماهیانه استاندارد شمسی -->
       <div class="calendar-container">
         <div id="liveClock" style="text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); direction: ltr; margin-bottom: 6px;">--:--:--</div>
         <div id="calendarMonthTitle" class="calendar-header-title">--</div>
@@ -248,19 +248,6 @@
 
     <div id="tabMonthlyStatus" class="tab-content hidden">
       <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
-      
-      <!-- منوی دسته‌بندی افقی برای تفکیک سریع پرسنل در بخش وضعیت -->
-      <div class="category-filters" id="statusCategoryFilters">
-        <button type="button" class="filter-btn active" onclick="filterStatusByJob('all', this)">همه بخش‌ها</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('تولید', this)">تولید</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('فنی', this)">فنی</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('برق', this)">برق</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('مهمان', this)">مهمان</button>
-      </div>
-
       <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
       <div class="status-legend">
         <div class="legend-item"><div class="legend-color box-blue"></div>روزانه</div>
@@ -592,6 +579,7 @@
       const titleEl = document.getElementById('calendarMonthTitle');
       if (titleEl) titleEl.innerText = `${monthNames[parseInt(shamsi.month)-1]} ${shamsi.year}`;
 
+      // ساخت تقویم ماهیانه استاندارد
       const gridEl = document.getElementById('calendarDaysGrid');
       if (gridEl && !gridEl.hasChildNodes()) {
         let daysInMonth = 31;
@@ -601,9 +589,12 @@
           daysInMonth = isLeap ? 30 : 29;
         }
 
+        // محاسبه روز هفته برای روز اول ماه (تقویم تقریبی یا دقیق شمسی)
+        // تبدیل تاریخ اول ماه شمسی به میلادی برای گرفتن روز هفته
         const firstDayGregorian = shamsiToGregorian(shamsi.year, shamsi.month, 1);
         const firstDayObj = new Date(firstDayGregorian.gy, firstDayGregorian.gm - 1, firstDayGregorian.gd);
-        let jsDay = firstDayObj.getDay();
+        let jsDay = firstDayObj.getDay(); // 0: Sunday, 1: Monday, ... 6: Saturday
+        // تبدیل به ایندکس شمسی (شنبه = 0، یکشنبه = 1، ... جمعه = 6)
         let startDayIndex = (jsDay + 1) % 7;
 
         let html = '';
@@ -701,7 +692,6 @@
 
   let allEmployeesData = [];
   window.currentJobFilter = 'all';
-  window.currentStatusJobFilter = 'all';
   window.currentSearchQuery = '';
   window.currentMonthFilter = 'all';
 
@@ -775,31 +765,12 @@
   function filterDOM(containerId, query) {
     const filter = normalizeText(query);
     const terms = filter.split(' ').filter(t => t !== '');
-    const items = document.getElementById(containerId).querySelectorAll('.leave-summary-card, .emp-item, .card, div[data-pos-group]');
+    const items = document.getElementById(containerId).querySelectorAll('.leave-summary-card, .emp-item, .card');
     
     items.forEach(item => {
       const name = normalizeText(item.getAttribute('data-name') || item.innerText);
       const isMatch = terms.every(term => name.includes(term));
       item.style.display = isMatch ? "" : "none";
-    });
-  }
-
-  function filterStatusByJob(jobCategory, btn) {
-    const parentContainer = document.getElementById('statusCategoryFilters');
-    if(parentContainer) {
-      parentContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    }
-    if(btn) btn.classList.add('active');
-    window.currentStatusJobFilter = jobCategory;
-    
-    const groups = document.querySelectorAll('div[data-pos-group]');
-    groups.forEach(g => {
-      const pos = g.getAttribute('data-pos-group');
-      if (jobCategory === 'all' || pos === jobCategory) {
-        g.style.display = '';
-      } else {
-        g.style.display = 'none';
-      }
     });
   }
 
@@ -1277,8 +1248,6 @@
     });
 
     sortedPositions.forEach(pos => {
-      let displayStyle = (window.currentStatusJobFilter === 'all' || window.currentStatusJobFilter === pos) ? '' : 'display:none;';
-      html += `<div data-pos-group="${pos}" style="${displayStyle}">`;
       html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos}</div>`;
       
       grouped[pos].forEach(emp => {
@@ -1307,7 +1276,6 @@
         const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
         html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small></div><div class="boxes-container">${boxesHtml}</div></div>`;
       });
-      html += `</div>`;
     });
 
     container.innerHTML = html || "<p style='text-align:center; color:var(--text-muted);'>پرسنلی یافت نشد.</p>";
