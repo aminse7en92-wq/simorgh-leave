@@ -129,7 +129,7 @@
     .clickable-card { cursor: pointer; transition: transform 0.1s ease, box-shadow 0.1s ease; }
     .clickable-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-color: var(--primary); }
 
-    /* تقویم ماهیانه */
+    /* استایل تقویم ماهیانه */
     .calendar-container { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .calendar-header-title { text-align: center; font-weight: bold; font-size: 1rem; color: var(--primary); margin-bottom: 12px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
@@ -138,13 +138,9 @@
     .calendar-cell.empty { background: transparent; }
     .calendar-cell.today { background: var(--primary); color: white; font-weight: bold; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
 
-    /* وضعیت 7 تایی با تاریخ زیر مربع */
-    .boxes-container { display: flex; gap: 4px; direction: rtl; }
-    .status-box-wrap { display: flex; flex-direction: column; align-items: center; }
-    .status-box { width: 26px; height: 26px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 12px; color: white; font-weight: bold; }
+    .boxes-container { display: flex; gap: 5px; direction: rtl; }
+    .status-box { width: 24px; height: 24px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 13px; color: white; font-weight: bold; }
     .status-box.empty { background: #f1f5f9; border: 1px dashed #cbd5e1; color: transparent; }
-    .box-date { font-size: 9px; color: var(--text-muted); margin-top: 2px; text-align: center; white-space: nowrap; }
-    
     .box-blue { background: var(--primary); }
     .box-green { background: var(--success); }
     .box-orange { background: var(--warning); }
@@ -189,7 +185,6 @@
 
 <div class="container">
   
-  <!-- صفحه ورود -->
   <div id="loginSection">
     <h2>🔐 ورود سیستم</h2>
     <form id="loginForm">
@@ -208,7 +203,6 @@
 
   <div id="appSection" class="hidden">
 
-    <!-- تب داشبورد -->
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
         <img src="icon.png" alt="لوگو سیمرغ" class="app-logo">
@@ -216,6 +210,7 @@
         <p>واحد کرمان (مزرعه ۳)</p>
       </div>
 
+      <!-- ساعت زنده تهران و تقویم ماهیانه استاندارد شمسی -->
       <div class="calendar-container">
         <div id="liveClock" style="text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); direction: ltr; margin-bottom: 6px;">--:--:--</div>
         <div id="calendarMonthTitle" class="calendar-header-title">--</div>
@@ -250,8 +245,34 @@
       </h3>
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
     </div>
+
+    <div id="tabMonthlyStatus" class="tab-content hidden">
+      <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
+      
+      <!-- منوی دسته‌بندی افقی برای تفکیک سریع پرسنل در بخش وضعیت -->
+      <div class="category-filters" id="statusCategoryFilters">
+        <button type="button" class="filter-btn active" onclick="filterStatusByJob('all', this)">همه بخش‌ها</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('تولید', this)">تولید</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('فنی', this)">فنی</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('برق', this)">برق</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('مهمان', this)">مهمان</button>
+      </div>
+
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
+      <div class="status-legend">
+        <div class="legend-item"><div class="legend-color box-blue"></div>روزانه</div>
+        <div class="legend-item"><div class="legend-color box-green"></div>ساعتی</div>
+        <div class="legend-item"><div class="legend-color box-black"></div>تعطیل رسمی</div>
+        <div class="legend-item"><div class="legend-color box-orange"></div>استعلاجی</div>
+        <div class="legend-item"><div class="legend-color box-red"></div>غیبت</div>
+        <div class="legend-item"><div class="legend-color box-purple"></div>سایر</div>
+      </div>
+      <div id="monthlyStatusList">در حال دریافت...</div>
+    </div>
     
-    <!-- تب ثبت مرخصی -->
     <div id="tabLeave" class="tab-content hidden">
       <div class="card" style="box-shadow: none; border:none; background: transparent;">
         <h2>📝 ثبت مرخصی جدید</h2>
@@ -298,48 +319,88 @@
       </div>
     </div>
 
-    <!-- تب وضعیت ماهانه -->
-    <div id="tabMonthlyStatus" class="tab-content hidden">
-      <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
+    <!-- تب گزارش -->
+    <div id="tabRemaining" class="tab-content hidden">
+      <h2>📊 گزارش باقی‌مانده و اکسل</h2>
+      <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
       
-      <!-- منوی افقی انتخاب ماه‌ها -->
-      <div class="month-filters" id="statusMonthFilters" style="margin-bottom: 10px;">
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('01', this)">فروردین</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('02', this)">اردیبهشت</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('03', this)">خرداد</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('04', this)">تیر</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('05', this)">مرداد</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('06', this)">شهریور</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('07', this)">مهر</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('08', this)">آبان</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('09', this)">آذر</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('10', this)">دی</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('11', this)">بهمن</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('12', this)">اسفند</button>
+      <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
+        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 بازه تاریخ برای خروجی اکسل (اختیاری)</h3>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:0.75rem;">از تاریخ:</label>
+            <input type="text" id="reportStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem;">تا تاریخ:</label>
+            <input type="text" id="reportEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
+          </div>
+        </div>
+        <small style="color:var(--text-muted); display:block; text-align:right; font-size:0.75rem;">اگر تاریخ‌ها خالی باشند، کل سوابق سال خروجی داده می‌شود.</small>
       </div>
 
-      <!-- منوی افقی دسته‌بندی مشاغل -->
-      <div class="category-filters" id="statusCategoryFilters">
-        <button type="button" class="filter-btn active" onclick="filterStatusByJob('all', this)">همه بخش‌ها</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('تولید', this)">تولید</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('فنی', this)">فنی</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('برق', this)">برق</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('مهمان', this)">مهمان</button>
+      <button class="btn-export" onclick="exportRemainingCSV()">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.768C6.35 8.68 7.5 9.5 8 9.5c.5 0 1.65-.82 2.884-2.052a.5.5 0 1 0-.768-.768C9.06 7.74 8.16 8.5 8 8.5c-.16 0-1.06-.76-2.116-1.82z"/><path d="M8 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 0z"/><path d="M1.5 11.5A.5.5 0 0 1 2 11h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-2z"/></svg>
+        دانلود گزارش در فایل اکسل
+      </button>
+
+      <input type="text" id="searchInputRemaining" class="search-input" placeholder="برای مشاهده گزارش، نام شخص را جستجو کنید..." oninput="filterRemaining(this.value)">
+      
+      <p id="remainingHint" style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-top: 20px;">
+        🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.
+      </p>
+
+      <div id="remainingList"></div>
+    </div>
+
+    <!-- تب پرسنل -->
+    <div id="tabEmployees" class="tab-content hidden">
+      <h2>👥 مدیریت پرسنل</h2>
+      
+      <div id="adminEmployeeGuard" class="hidden" style="text-align:center; padding:30px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:var(--danger); margin-bottom:20px;">
+        <h3>شما به این بخش دسترسی ندارید</h3>
       </div>
 
-      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
-      <div class="status-legend">
-        <div class="legend-item"><div class="legend-color box-blue"></div>روزانه</div>
-        <div class="legend-item"><div class="legend-color box-green"></div>ساعتی</div>
-        <div class="legend-item"><div class="legend-color box-black"></div>تعطیل رسمی</div>
-        <div class="legend-item"><div class="legend-color box-orange"></div>استعلاجی</div>
-        <div class="legend-item"><div class="legend-color box-red"></div>غیبت</div>
-        <div class="legend-item"><div class="legend-color box-purple"></div>سایر</div>
+      <div class="card" id="addEmployeeCard">
+        <form id="addEmployeeForm">
+          <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="empPersonnelCode" placeholder="مثال: 101" inputmode="numeric"></div>
+          <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="empFullName" required placeholder="مثال: رضا احمدی"></div>
+          
+          <div class="form-group">
+            <label>محل کار / شغل:</label>
+            <select id="empPosition" required>
+              <option value="">انتخاب کنید...</option>
+              <option value="بسته بندی 1">بسته بندی 1</option>
+              <option value="بسته بندی 2">بسته بندی 2</option>
+              <option value="تولید">تولید</option>
+              <option value="فنی">فنی</option>
+              <option value="برق">برق</option>
+              <option value="اداری و مدیریت">اداری و مدیریت</option>
+              <option value="مهمان">مهمان</option>
+              <option value="سایر">سایر</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn-add-emp">ذخیره نیرو در سیستم</button>
+        </form>
+        <div id="empStatus" class="status"></div>
       </div>
-      <div id="monthlyStatusList">در حال دریافت...</div>
+
+      <h3 style="margin-top: 30px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
+      
+      <div class="category-filters" id="employeeCategoryFilters">
+        <button type="button" class="filter-btn active" onclick="filterByJob('all', this)">همه پرسنل</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('تولید', this)">تولید</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('فنی', this)">فنی</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('برق', this)">برق</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
+        <button type="button" class="filter-btn" onclick="filterByJob('مهمان', this)">مهمان</button>
+      </div>
+
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="handleEmployeeSearch(this.value)">
+      <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
     <!-- تب سوابق -->
@@ -379,93 +440,6 @@
       <input type="text" class="search-input" placeholder="جستجوی نام، شماره پرسنلی یا تاریخ..." oninput="filterRecords(this.value)">
       <div id="recordsList">در حال دریافت...</div>
       <button id="logoutBtn" class="btn-logout" style="display:none;">خروج از حساب کاربری</button>
-    </div>
-
-    <!-- تب پرسنل با قابلیت کشویی -->
-    <div id="tabEmployees" class="tab-content hidden">
-      <h2>👥 مدیریت پرسنل</h2>
-      
-      <div id="adminEmployeeGuard" class="hidden" style="text-align:center; padding:30px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:var(--danger); margin-bottom:20px;">
-        <h3>شما به این بخش دسترسی ندارید</h3>
-      </div>
-
-      <!-- دکمه باز کردن فرم ثبت پرسنل -->
-      <button type="button" id="toggleAddEmpBtn" onclick="toggleAddEmployeeForm()" style="background: var(--success); margin-bottom: 15px;">➕ افزودن پرسنل جدید</button>
-
-      <div class="card hidden" id="addEmployeeCard">
-        <form id="addEmployeeForm">
-          <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="empPersonnelCode" placeholder="مثال: 101" inputmode="numeric"></div>
-          <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="empFullName" required placeholder="مثال: رضا احمدی"></div>
-          
-          <div class="form-group">
-            <label>محل کار / شغل:</label>
-            <select id="empPosition" required>
-              <option value="">انتخاب کنید...</option>
-              <option value="بسته بندی 1">بسته بندی 1</option>
-              <option value="بسته بندی 2">بسته بندی 2</option>
-              <option value="تولید">تولید</option>
-              <option value="فنی">فنی</option>
-              <option value="برق">برق</option>
-              <option value="اداری و مدیریت">اداری و مدیریت</option>
-              <option value="مهمان">مهمان</option>
-              <option value="سایر">سایر</option>
-            </select>
-          </div>
-          
-          <button type="submit" class="btn-add-emp">ذخیره نیرو در سیستم</button>
-        </form>
-        <div id="empStatus" class="status"></div>
-      </div>
-
-      <h3 style="margin-top: 20px; text-align: right; font-size: 1rem;">لیست نیروهای فعلی:</h3>
-      
-      <div class="category-filters" id="employeeCategoryFilters">
-        <button type="button" class="filter-btn active" onclick="filterByJob('all', this)">همه پرسنل</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('تولید', this)">تولید</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('فنی', this)">فنی</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('برق', this)">برق</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
-        <button type="button" class="filter-btn" onclick="filterByJob('مهمان', this)">مهمان</button>
-      </div>
-
-      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="handleEmployeeSearch(this.value)">
-      <div id="employeesManageList">در حال دریافت...</div>
-    </div>
-
-    <!-- تب گزارش -->
-    <div id="tabRemaining" class="tab-content hidden">
-      <h2>📊 گزارش باقی‌مانده و اکسل</h2>
-      <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
-      
-      <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
-        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 بازه تاریخ برای خروجی اکسل (اختیاری)</h3>
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <div style="flex:1;">
-            <label style="font-size:0.75rem;">از تاریخ:</label>
-            <input type="text" id="reportStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
-          </div>
-          <div style="flex:1;">
-            <label style="font-size:0.75rem;">تا تاریخ:</label>
-            <input type="text" id="reportEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
-          </div>
-        </div>
-        <small style="color:var(--text-muted); display:block; text-align:right; font-size:0.75rem;">اگر تاریخ‌ها خالی باشند، کل سوابق سال خروجی داده می‌شود.</small>
-      </div>
-
-      <button class="btn-export" onclick="exportRemainingCSV()">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.768C6.35 8.68 7.5 9.5 8 9.5c.5 0 1.65-.82 2.884-2.052a.5.5 0 1 0-.768-.768C9.06 7.74 8.16 8.5 8 8.5c-.16 0-1.06-.76-2.116-1.82z"/><path d="M8 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 0z"/><path d="M1.5 11.5A.5.5 0 0 1 2 11h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-2z"/></svg>
-        دانلود گزارش در فایل اکسل
-      </button>
-
-      <input type="text" id="searchInputRemaining" class="search-input" placeholder="برای مشاهده گزارش، نام شخص را جستجو کنید..." oninput="filterRemaining(this.value)">
-      
-      <p id="remainingHint" style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-top: 20px;">
-        🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.
-      </p>
-
-      <div id="remainingList"></div>
     </div>
 
   </div>
@@ -543,11 +517,11 @@
 
 <div id="tabBar" class="tab-bar hidden">
   <button class="tab-item active" onclick="switchTab('tabDashboard', this)"><span>🏠</span>داشبورد</button>
-  <button class="tab-item" onclick="switchTab('tabLeave', this)"><span>📝</span>ثبت</button>
   <button class="tab-item" onclick="switchTab('tabMonthlyStatus', this)"><span>📅</span>وضعیت</button>
-  <button class="tab-item" onclick="switchTab('tabRecords', this)"><span>📋</span>سوابق</button>
-  <button class="tab-item" onclick="switchTab('tabEmployees', this)"><span>👥</span>پرسنل</button>
+  <button class="tab-item" onclick="switchTab('tabLeave', this)"><span>📝</span>ثبت</button>
   <button class="tab-item" onclick="switchTab('tabRemaining', this)"><span>📊</span>گزارش</button>
+  <button class="tab-item" onclick="switchTab('tabEmployees', this)"><span>👥</span>پرسنل</button>
+  <button class="tab-item" onclick="switchTab('tabRecords', this)"><span>📋</span>سوابق</button>
 </div>
 
 <script>
@@ -601,20 +575,7 @@
     return true;
   }
 
-  function toggleAddEmployeeForm() {
-    const card = document.getElementById('addEmployeeCard');
-    const btn = document.getElementById('toggleAddEmpBtn');
-    if (card.classList.contains('hidden')) {
-      card.classList.remove('hidden');
-      btn.innerText = '✖ بستن فرم افزودن پرسنل';
-      btn.style.background = 'var(--danger)';
-    } else {
-      card.classList.add('hidden');
-      btn.innerText = '➕ افزودن پرسنل جدید';
-      btn.style.background = 'var(--success)';
-    }
-  }
-
+  // ساعت زنده تهران و تقویم ماهیانه استاندارد شمسی
   function updateTehranClockAndCalendar() {
     try {
       const now = new Date();
@@ -686,21 +647,6 @@
       document.getElementById('loginPassword').value = localStorage.getItem('savedPassword') || '';
       document.getElementById('rememberMe').checked = true;
     }
-    
-    const today = new Date();
-    const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(today);
-    const [m, d, y] = tehranDateStr.split('/').map(Number);
-    const currentShamsi = gregorianToShamsi(y, m, d);
-    window.currentStatusMonth = currentShamsi.month;
-
-    const monthBtns = document.querySelectorAll('#statusMonthFilters .month-btn');
-    monthBtns.forEach((btn, idx) => {
-      if (String(idx + 1).padStart(2, '0') === currentShamsi.month) {
-        monthBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      }
-    });
-
     handleRecordTypeChange();
     updateTehranClockAndCalendar();
   });
@@ -756,7 +702,6 @@
   let allEmployeesData = [];
   window.currentJobFilter = 'all';
   window.currentStatusJobFilter = 'all';
-  window.currentStatusMonth = '01';
   window.currentSearchQuery = '';
   window.currentMonthFilter = 'all';
 
@@ -856,16 +801,6 @@
         g.style.display = 'none';
       }
     });
-  }
-
-  function filterStatusByMonth(monthCode, btn) {
-    const parentContainer = document.getElementById('statusMonthFilters');
-    if(parentContainer) {
-      parentContainer.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-    }
-    if(btn) btn.classList.add('active');
-    window.currentStatusMonth = monthCode;
-    loadMonthlyStatus();
   }
 
   function filterByMonth(monthCode, btn) {
@@ -975,30 +910,8 @@
       return;
     }
 
-    visibleCards.sort((a, b) => {
-      const tA = Number(a.getAttribute('data-start-time') || 0);
-      const tB = Number(b.getAttribute('data-start-time') || 0);
-      return tA - tB; 
-    });
-
-    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-    <meta charset="utf-8">
-    <style>
-      table { direction: rtl; border-collapse: collapse; font-family: 'B Zar', Tahoma, sans-serif; }
-      th, td { border: 1px solid #000000; text-align: center; vertical-align: middle; width: 145pt; font-size: 14pt; padding: 6px; }
-      th { background-color: #d1d5db; font-weight: bold; }
-    </style>
-    </head>
-    <body>
-    <table>
-      <tr>
-        <th>تاریخ و ساعت شروع</th>
-        <th>ساعت پایان</th>
-        <th>نام پرسنل</th>
-        <th>نوع مرخصی</th>
-        <th>ثبت‌کننده</th>
-      </tr>`;
+    let csvContent = '\uFEFF';
+    csvContent += "نام پرسنل,نوع مرخصی,تاریخ و ساعت شروع,تاریخ و ساعت پایان,ثبت‌کننده\n";
 
     visibleCards.forEach(card => {
       const strongEl = card.querySelector('strong');
@@ -1007,32 +920,16 @@
       const type = badgeEl ? badgeEl.innerText.trim() : '';
       
       const spans = card.querySelectorAll('span[dir="ltr"]');
-      const start = spans.length > 0 ? spans[0].innerText.trim() : '';
-      let end = spans.length > 1 ? spans[1].innerText.trim() : '';
-      
-      let endTimeOnly = end;
-      if (end.includes(' ')) {
-         let parts = end.split(' ');
-         endTimeOnly = parts[parts.length - 1];
-      }
-
+      const start = spans.length > 0 ? spans[0].innerText : '';
+      const end = spans.length > 1 ? spans[1].innerText : '';
       const creator = card.getAttribute('data-creator') || '';
       
-      html += `<tr>
-        <td>${start}</td>
-        <td>${endTimeOnly}</td>
-        <td>${name}</td>
-        <td>${type}</td>
-        <td>${creator}</td>
-      </tr>`;
+      csvContent += `"${name}","${type}","${start}","${end}","${creator}"\n`;
     });
 
-    html += `</table></body></html>`;
-
-    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a"); const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url); 
-    link.setAttribute("download", "گزارش_سوابق.xls");
+    link.setAttribute("href", url); link.setAttribute("download", "گزارش_سوابق_ثبت_شده.csv");
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
@@ -1144,207 +1041,320 @@
     }
 
     alert('در حال آماده‌سازی فایل اکسل...');
-    
-    try {
-      const { data, error } = await client.auth.getSession();
-      if(error) throw error;
-      const session = data?.session;
-      const userEmail = session ? session.user.email : '';
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
 
-      const { data: empData, error: empErr } = await client.from('employees').select('id, personnel_code, full_name, position');
-      const { data: recData, error: recErr } = await client.from('leave_records').select('*');
+    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    const { data: records } = await client.from('leave_records').select('*');
+    if (!employees || employees.length === 0) return;
+
+    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
+
+    let csvContent = '\uFEFF';
+    csvContent += "کد پرسنلی,نام و نام خانوادگی,محل کار,مرخصی روزانه,مرخصی ساعتی,استعلاجی,تعطیل رسمی,غیبت,سایر,مانده (روز),مانده (ساعت)\n";
+
+    employees.forEach(emp => {
+      let empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
       
-      if (empErr || recErr || !empData) { 
-        alert("خطا در دریافت اطلاعات دیتابیس."); 
-        return; 
+      if (startDate || endDate) {
+        empRecords = empRecords.filter(rec => {
+          const recStart = new Date(rec.start_at);
+          if (startDate && recStart < startDate) return false;
+          if (endDate && recStart > endDate) return false;
+          return true;
+        });
       }
 
-      let employees = empData.filter(emp => isAllowedEmployee(emp.position, userEmail));
-      employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
-
-      let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-      <meta charset="utf-8">
-      <style>
-        table { direction: rtl; border-collapse: collapse; font-family: 'B Zar', Tahoma, sans-serif; }
-        th, td { border: 1px solid #000000; text-align: center; vertical-align: middle; width: 145pt; font-size: 14pt; padding: 5px; }
-        th { background-color: #d1d5db; font-weight: bold; }
-      </style>
-      </head>
-      <body>
-      <table>
-        <tr>
-          <th>کد پرسنلی</th>
-          <th>نام و نام خانوادگی</th>
-          <th>محل کار</th>
-          <th>مرخصی روزانه</th>
-          <th>مرخصی ساعتی</th>
-          <th>استعلاجی</th>
-          <th>تعطیل رسمی</th>
-          <th>غیبت</th>
-          <th>سایر</th>
-          <th>مانده (روز)</th>
-          <th>مانده (ساعت)</th>
-        </tr>`;
-
-      employees.forEach(emp => {
-        let empRecords = recData ? recData.filter(r => r.employee_id === emp.id) : [];
-        
-        if (startDate || endDate) {
-          empRecords = empRecords.filter(rec => {
-            const recStart = new Date(rec.start_at);
-            if (startDate && recStart < startDate) return false;
-            if (endDate && recStart > endDate) return false;
-            return true;
-          });
+      let dM=0, hM=0, sM=0, holM=0, aM=0, otherM=0;
+      empRecords.forEach(rec => {
+        const diffMinutes = Math.max(0, Math.floor((new Date(rec.end_at) - new Date(rec.start_at)) / 60000));
+        switch(rec.record_type) {
+          case 'daily_leave': case 'daily': dM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'hourly_leave': hM += diffMinutes; break;
+          case 'sick_leave': sM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'official_holiday': holM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'absence': aM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
+          case 'other': otherM += diffMinutes; break;
         }
-
-        let dM=0, hM=0, sM=0, holM=0, aM=0, otherM=0;
-        empRecords.forEach(rec => {
-          const diffMinutes = Math.max(0, Math.floor((new Date(rec.end_at) - new Date(rec.start_at)) / 60000));
-          switch(rec.record_type) {
-            case 'daily_leave': case 'daily': dM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-            case 'hourly_leave': hM += diffMinutes; break;
-            case 'sick_leave': sM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-            case 'official_holiday': holM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-            case 'absence': aM += Math.max(1, Math.ceil(diffMinutes / 1440)) * WORK_DAY_MINUTES; break;
-            case 'other': otherM += diffMinutes; break;
-          }
-        });
-        const usedMinutes = dM + hM;
-        const remMinutes = Math.max(0, TOTAL_ANNUAL_MINUTES - usedMinutes);
-        const remFormatted = formatWorkDaysAndHours(remMinutes);
-        
-        html += `<tr>
-          <td style="mso-number-format:'\\@'">${emp.personnel_code || '---'}</td>
-          <td>${emp.full_name}</td>
-          <td>${emp.position || '---'}</td>
-          <td>${formatHoursAndMinutes(dM)}</td>
-          <td>${formatHoursAndMinutes(hM)}</td>
-          <td>${formatHoursAndMinutes(sM)}</td>
-          <td>${formatHoursAndMinutes(holM)}</td>
-          <td>${formatHoursAndMinutes(aM)}</td>
-          <td>${formatHoursAndMinutes(otherM)}</td>
-          <td>${remFormatted.daysText}</td>
-          <td>${remFormatted.totalHoursText}</td>
-        </tr>`;
       });
+      const usedMinutes = dM + hM;
+      const remMinutes = Math.max(0, TOTAL_ANNUAL_MINUTES - usedMinutes);
+      const remFormatted = formatWorkDaysAndHours(remMinutes);
+      csvContent += `${emp.personnel_code || '---'},${emp.full_name},${emp.position || '---'},${formatHoursAndMinutes(dM)},${formatHoursAndMinutes(hM)},${formatHoursAndMinutes(sM)},${formatHoursAndMinutes(holM)},${formatHoursAndMinutes(aM)},${formatHoursAndMinutes(otherM)},${remFormatted.daysText},${remFormatted.totalHoursText}\n`;
+    });
 
-      html += `</table></body></html>`;
-
-      const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-      const link = document.createElement("a"); const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url); 
-      link.setAttribute("download", "گزارش_مانده_مرخصی.xls"); 
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
-      
-    } catch(e) {
-      alert("خطا در ایجاد خروجی اکسل: " + e.message);
-    }
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a"); const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url); link.setAttribute("download", "گزارش_مرخصی_بازه_تاریخ.csv");
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
   async function init() {
-    try {
-      const { data, error } = await client.auth.getSession();
-      if (error) {
-        await client.auth.signOut();
-        throw error;
-      }
+    const { data: { session } } = await client.auth.getSession();
+    if (session) {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('appSection').classList.remove('hidden');
+      document.getElementById('tabBar').classList.remove('hidden');
       
-      const session = data?.session;
+      const userEmail = session.user.email;
+      const displayName = getPersianName(userEmail);
+      document.getElementById('currentLoggedInUser').innerText = displayName;
 
-      if (session) {
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('tabBar').classList.remove('hidden');
-        
-        const userEmail = session.user.email;
-        const displayName = getPersianName(userEmail);
-        document.getElementById('currentLoggedInUser').innerText = displayName;
+      const isAdmin = (userEmail.toLowerCase() === 'amin.se7en92@gmail.com');
+      const addEmpCard = document.getElementById('addEmployeeCard');
+      const adminGuard = document.getElementById('adminEmployeeGuard');
 
-        const isAdmin = (userEmail.toLowerCase() === 'amin.se7en92@gmail.com');
-        const addEmpCard = document.getElementById('addEmployeeCard');
-        const toggleEmpBtn = document.getElementById('toggleAddEmpBtn');
-        const adminGuard = document.getElementById('adminEmployeeGuard');
-
-        if (isAdmin) {
-          if(toggleEmpBtn) toggleEmpBtn.classList.remove('hidden');
-          if(adminGuard) adminGuard.classList.add('hidden');
-        } else {
-          if(toggleEmpBtn) toggleEmpBtn.classList.add('hidden');
-          if(addEmpCard) addEmpCard.classList.add('hidden');
-          if(adminGuard) adminGuard.classList.remove('hidden');
-        }
-
-        const catFilters = document.getElementById('employeeCategoryFilters');
-        const emailLower = userEmail.toLowerCase();
-        if (emailLower === 'm.gishinzadeh@simorgh.local' || emailLower.includes('m.gishini')) {
-          if(catFilters) catFilters.style.display = 'none';
-        } else {
-          if(catFilters) catFilters.style.display = 'flex';
-        }
-
-        await loadEmployeesList(); 
-        await loadDashboard(); 
-        await loadMonthlyStatus();
-        await loadRecords();
+      if (isAdmin) {
+        if(addEmpCard) addEmpCard.classList.remove('hidden');
+        if(adminGuard) adminGuard.classList.add('hidden');
       } else {
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-        document.getElementById('tabBar').classList.add('hidden');
+        if(addEmpCard) addEmpCard.classList.add('hidden');
+        if(adminGuard) adminGuard.classList.remove('hidden');
       }
-    } catch(err) {
-      console.error("Init Error: ", err);
+
+      const catFilters = document.getElementById('employeeCategoryFilters');
+      const emailLower = userEmail.toLowerCase();
+      if (emailLower === 'm.gishinzadeh@simorgh.local' || emailLower.includes('m.gishini')) {
+        if(catFilters) catFilters.style.display = 'none';
+      } else {
+        if(catFilters) catFilters.style.display = 'flex';
+      }
+
+      await loadEmployeesList(); loadDashboard();
+    } else {
       document.getElementById('loginSection').classList.remove('hidden');
       document.getElementById('appSection').classList.add('hidden');
       document.getElementById('tabBar').classList.add('hidden');
-      
-      const status = document.getElementById('loginStatus');
-      if (status) {
-        status.style.color = "var(--danger)";
-        status.innerText = "خطا در ارتباط: " + err.message;
-      }
     }
   }
 
-  async function loadEmployeesList() {
-    try {
-      const { data: empData, error: empErr } = await client.from('employees').select('*');
-      if (empErr) throw empErr;
+  function gregorianToShamsi(gy, gm, gd) {
+    var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    var jy = (gy <= 1600) ? 0 : 979; gy -= (gy <= 1600) ? 621 : 1600; var gy2 = (gm > 2) ? (gy + 1) : gy;
+    var days = (365 * gy) + (parseInt((gy2 + 3) / 4)) - (parseInt((gy2 + 99) / 100)) + (parseInt((gy2 + 399) / 400)) - 80 + gd + g_d_m[gm - 1];
+    jy += 33 * (parseInt(days / 12053)); days %= 12053; jy += 4 * (parseInt(days / 1461)); days %= 1461;
+    if (days > 365) { jy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
+    var jm = (days < 186) ? 1 + parseInt(days / 31) : 7 + parseInt((days - 186) / 30);
+    var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+    return { year: jy, month: String(jm).padStart(2, '0'), day: String(jd).padStart(2, '0') };
+  }
 
-      const { data: sessionRes } = await client.auth.getSession();
-      const userEmail = sessionRes?.session?.user?.email || '';
-      const isAdmin = userEmail.toLowerCase() === 'amin.se7en92@gmail.com';
+  function shamsiToGregorian(jy, jm, jd) {
+    jy = parseInt(jy); jm = parseInt(jm); jd = parseInt(jd);
+    var sal_a = [0, 31, ((jy % 4 === 0 && jy % 100 !== 0) || (jy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    var gy = (jy <= 979) ? 621 : 1600; jy -= (jy <= 979) ? 0 : 979;
+    var days = (365 * jy) + (parseInt(jy / 33) * 8) + parseInt(((jy % 33) + 3) / 4) + 78 + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+    gy += 400 * parseInt(days / 146097); days %= 146097; if (days > 36524) { gy += 100 * parseInt(--days / 36524); days %= 36524; if (days >= 365) days++; }
+    gy += 4 * parseInt(days / 1461); days %= 1461; if (days > 365) { gy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
+    var gd = days + 1; var gm; for (gm = 0; gm < 13; gm++) { var v = sal_a[gm]; if (gd <= v) break; gd -= v; }
+    return { gy: gy, gm: gm, gd: gd };
+  }
 
-      let data = empData || [];
-      data = data.filter(e => isAllowedEmployee(e.position, userEmail));
+  function toEnglishDigits(str) { return String(str).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
 
-      const select = document.getElementById('employeeSelect'); 
-      const manageList = document.getElementById('employeesManageList');
+  function parseManualInputToDate(dateId, timeId) {
+    const rawDate = document.getElementById(dateId).value; const rawTime = document.getElementById(timeId).value;
+    if (!rawDate || !rawTime) return null;
+    const cleanDate = toEnglishDigits(rawDate).replace(/\s/g, '');
+    const dateParts = cleanDate.split('/').map(Number);
+    const timeParts = toEnglishDigits(rawTime).trim().split(':').map(Number);
+    if (dateParts.length !== 3 || timeParts.length !== 2) return null;
+    const [year, month, day] = dateParts; const [hour, minute] = timeParts;
+    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) return null;
+    const gDate = shamsiToGregorian(year, month, day);
+    return new Date(gDate.gy, gDate.gm - 1, gDate.gd, hour, minute, 0);
+  }
+
+  async function loadDashboard() {
+    const containerStats = document.getElementById('dashboardStats');
+    const containerToday = document.getElementById('dashboardTodayLeave');
+    const containerTomorrow = document.getElementById('dashboardTomorrowLeave');
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    let { data: records } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)');
+    
+    if (employees) {
+      employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    }
+    const allowedEmpIds = new Set((employees || []).map(e => e.id));
+
+    if (records) {
+      records = records.filter(r => allowedEmpIds.has(r.employee_id));
+
+      const today = new Date();
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
       
-      if (data.length > 0) {
-        data.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
-        allEmployeesData = data;
-        
-        select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => {
-          const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
-          return `<option value="${e.id}">${e.full_name}${codeText}</option>`;
+      const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
+      const endOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 23, 59, 59);
+
+      const activeToday = records.filter(r => new Date(r.start_at) <= endOfToday && new Date(r.end_at) >= startOfToday);
+      const activeTomorrow = records.filter(r => new Date(r.start_at) <= endOfTomorrow && new Date(r.end_at) >= startOfTomorrow);
+      
+      activeToday.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
+      activeTomorrow.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
+
+      if (activeToday.length > 0) {
+        containerToday.innerHTML = activeToday.map(r => {
+          const emp = r.employees;
+          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+          const badgeClass = getBadgeClass(r.record_type);
+          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
         }).join('');
-        
-        manageList.innerHTML = data.map(e => {
-          const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
-          const actionsHtml = isAdmin ? `<div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div>` : '';
-          return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div>${actionsHtml}</div>`;
+      } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
+      
+      if (activeTomorrow.length > 0) {
+        containerTomorrow.innerHTML = activeTomorrow.map(r => {
+          const emp = r.employees;
+          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+          const badgeClass = getBadgeClass(r.record_type);
+          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
         }).join('');
-      } else {
-        allEmployeesData = []; 
-        if(select) select.innerHTML = `<option value="">بدون پرسنل</option>`; 
-        if(manageList) manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
-      }
-    } catch(e) {
-      console.error(e);
-      const manageList = document.getElementById('employeesManageList');
-      if(manageList) manageList.innerHTML = `<p style="color:red; text-align:center;">خطا در دریافت پرسنل: ${e.message}</p>`;
+      } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
+      
+      containerStats.innerHTML = `
+        <div class="detail-item info clickable-card" style="text-align:center;" onclick="switchTab('tabEmployees', document.querySelectorAll('.tab-item')[4])">
+          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--primary);">${employees ? employees.length : 0}</span>
+          <strong>کل پرسنل 👥</strong>
+        </div>
+        <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[5])">
+          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span>
+          <strong>کل سوابق 📋</strong>
+        </div>
+        <div class="detail-item danger" style="text-align:center;">
+          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--danger);">${activeToday.length}</span>
+          <strong>مرخصی امروز</strong>
+        </div>
+        <div class="detail-item" style="text-align:center; background:#f3e8ff; border-color:#d8b4fe;">
+          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:#9333ea;">${activeTomorrow.length}</span>
+          <strong style="color:#7e22ce;">مرخصی فردا</strong>
+        </div>
+      `;
+    }
+  }
+
+  async function loadMonthlyStatus() {
+    const container = document.getElementById('monthlyStatusList');
+    container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>در حال بارگذاری...</p>";
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('id, personnel_code, full_name, position');
+    const { data: records } = await client.from('leave_records').select('*');
+    if (!employees || employees.length === 0) {
+      container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>پرسنلی ثبت نشده است.</p>";
+      return;
+    }
+
+    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
+
+    const today = new Date();
+    const currentShamsi = gregorianToShamsi(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+    document.getElementById('currentMonthLabel').innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(currentShamsi.month) - 1]} ${currentShamsi.year}</span>`;
+
+    let grouped = {};
+    employees.forEach(emp => {
+      let pos = emp.position || 'سایر';
+      if (!grouped[pos]) grouped[pos] = [];
+      grouped[pos].push(emp);
+    });
+
+    let html = '';
+    const positionsOrder = ['بسته بندی 1', 'بسته بندی 2', 'تولید', 'فنی', 'برق', 'اداری و مدیریت', 'مهمان', 'سایر'];
+    let sortedPositions = Object.keys(grouped).sort((a, b) => {
+      let idxA = positionsOrder.indexOf(a);
+      let idxB = positionsOrder.indexOf(b);
+      if (idxA === -1) idxA = 99;
+      if (idxB === -1) idxB = 99;
+      return idxA - idxB;
+    });
+
+    sortedPositions.forEach(pos => {
+      let displayStyle = (window.currentStatusJobFilter === 'all' || window.currentStatusJobFilter === pos) ? '' : 'display:none;';
+      html += `<div data-pos-group="${pos}" style="${displayStyle}">`;
+      html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos}</div>`;
+      
+      grouped[pos].forEach(emp => {
+        const empRecords = records ? records.filter(r => r.employee_id === emp.id) : [];
+        const currentMonthRecords = empRecords.filter(rec => {
+          const recDate = new Date(rec.start_at);
+          const recShamsi = gregorianToShamsi(recDate.getFullYear(), recDate.getMonth() + 1, recDate.getDate());
+          return recShamsi.year == currentShamsi.year && recShamsi.month == currentShamsi.month;
+        }).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+
+        let boxesHtml = '';
+        for (let i = 0; i < 6; i++) {
+          if (i < currentMonthRecords.length) {
+            let colorClass = '';
+            switch(currentMonthRecords[i].record_type) {
+              case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
+              case 'hourly_leave': colorClass = 'box-green'; break;
+              case 'sick_leave': colorClass = 'box-orange'; break;
+              case 'official_holiday': colorClass = 'box-black'; break;
+              case 'absence': colorClass = 'box-red'; break;
+              case 'other': colorClass = 'box-purple'; break;
+            }
+            boxesHtml += `<div class="status-box ${colorClass || 'box-blue'}">✔</div>`;
+          } else boxesHtml += `<div class="status-box empty"></div>`;
+        }
+        const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+        html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small></div><div class="boxes-container">${boxesHtml}</div></div>`;
+      });
+      html += `</div>`;
+    });
+
+    container.innerHTML = html || "<p style='text-align:center; color:var(--text-muted);'>پرسنلی یافت نشد.</p>";
+  }
+
+  document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { data: { session } } = await client.auth.getSession();
+    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
+      alert("شما به این بخش دسترسی ندارید.");
+      return;
+    }
+
+    let pCode = document.getElementById('empPersonnelCode').value.trim();
+    if (pCode === "") pCode = null;
+    const { error } = await client.from('employees').insert([{ personnel_code: pCode, full_name: document.getElementById('empFullName').value, position: document.getElementById('empPosition').value }]);
+    if (!error) { document.getElementById('addEmployeeForm').reset(); loadEmployeesList(); }
+    else alert("خطا: " + error.message);
+  });
+
+  async function loadEmployeesList() {
+    let { data } = await client.from('employees').select('*');
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+    const isAdmin = session && userEmail.toLowerCase() === 'amin.se7en92@gmail.com';
+
+    if (data) {
+      data = data.filter(e => isAllowedEmployee(e.position, userEmail));
+    }
+
+    const select = document.getElementById('employeeSelect'); const manageList = document.getElementById('employeesManageList');
+    if (data && data.length > 0) {
+      data.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
+      allEmployeesData = data;
+      
+      select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => {
+        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+        return `<option value="${e.id}">${e.full_name}${codeText}</option>`;
+      }).join('');
+      
+      manageList.innerHTML = data.map(e => {
+        const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+        const actionsHtml = isAdmin ? `<div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div>` : '';
+        return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div>${actionsHtml}</div>`;
+      }).join('');
+    } else {
+      allEmployeesData = []; select.innerHTML = `<option value="">بدون پرسنل</option>`; manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
     }
   }
 
@@ -1515,6 +1525,128 @@
         status.innerText = "خطا در ویرایش: " + error.message;
     }
   });
+
+  function getBadgeClass(type) {
+    switch(type) {
+      case 'daily_leave': case 'daily': return 'badge-blue';
+      case 'hourly_leave': return 'badge-green';
+      case 'sick_leave': return 'badge-orange';
+      case 'official_holiday': return 'badge-black';
+      case 'absence': return 'badge-red';
+      case 'other': return 'badge-purple';
+      default: return 'badge-blue';
+    }
+  }
+
+  async function loadRemainingLeave() {
+    const container = document.getElementById('remainingList');
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data: employees } = await client.from('employees').select('*'); 
+    const { data: records } = await client.from('leave_records').select('*');
+    if (!employees || employees.length === 0) return;
+
+    employees = employees.filter(emp => isAllowedEmployee(emp.position, userEmail));
+    employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
+
+    container.innerHTML = employees.map(emp => {
+      let dM=0, hM=0, sM=0, holM=0, aM=0, otherM=0;
+      (records || []).filter(r=>r.employee_id===emp.id).forEach(rec => {
+        const diff = Math.max(0, Math.floor((new Date(rec.end_at)-new Date(rec.start_at))/60000));
+        const days = Math.max(1, Math.ceil(diff/1440));
+        switch(rec.record_type) {
+          case 'daily_leave': case 'daily': dM += days*WORK_DAY_MINUTES; break;
+          case 'hourly_leave': hM += diff; break;
+          case 'sick_leave': sM += days*WORK_DAY_MINUTES; break;
+          case 'official_holiday': holM += days*WORK_DAY_MINUTES; break;
+          case 'absence': aM += days*WORK_DAY_MINUTES; break;
+          case 'other': otherM += diff; break;
+        }
+      });
+      const rem = formatWorkDaysAndHours(Math.max(0, TOTAL_ANNUAL_MINUTES - (dM+hM)));
+      const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+      
+      return `<div class="leave-summary-card" data-name="${emp.full_name} ${emp.personnel_code || ''}" style="display:none;">
+        <div class="leave-summary-header"><strong>${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><span class="badge">مانده: ${rem.daysText}<small>(${rem.totalHoursText})</small></span></div>
+        <div class="detail-grid">
+            <div class="detail-item"><strong>روزانه:</strong><br>${formatWorkDaysAndHours(dM).daysText}</div>
+            <div class="detail-item"><strong>ساعتی:</strong><br>${formatHoursAndMinutes(hM)}</div>
+            <div class="detail-item warning"><strong>استعلاجی:</strong><br>${formatWorkDaysAndHours(sM).daysText}</div>
+            <div class="detail-item danger"><strong>غیبت:</strong><br>${formatWorkDaysAndHours(aM).daysText}</div>
+            <div class="detail-item info" style="background:#f3e8ff; border-color:#d8b4fe;"><strong>سایر:</strong><br>${formatHoursAndMinutes(otherM)}</div>
+            <div class="detail-item" style="background:#f8fafc; border-color:#cbd5e1; text-align:center;">
+                <strong>تعطیل رسمی:</strong><br>${formatWorkDaysAndHours(holM).daysText}
+            </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadRecords() {
+    const list = document.getElementById('recordsList');
+    
+    const { data: { session } } = await client.auth.getSession();
+    const userEmail = session ? session.user.email : '';
+
+    let { data } = await client.from('leave_records').select('*, employees(personnel_code, full_name, position)').order('start_at', { ascending: false });
+    
+    if (data) {
+      data = data.filter(r => r.employees && isAllowedEmployee(r.employees.position, userEmail));
+
+      let html = data.map(r => {
+        const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
+        const emp = r.employees;
+        const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
+        
+        const sd = new Date(r.start_at);
+        const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
+        const dateStr = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`; 
+        const dateStrNoZero = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`; 
+        
+        const searchData = `${emp ? emp.full_name : ''} ${emp ? emp.personnel_code : ''} ${dateStr} ${dateStrNoZero}`;
+        const recordMonth = String(sShamsi.month);
+
+        const badgeClass = getBadgeClass(r.record_type);
+        const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
+        const creatorName = getPersianName(r.created_by);
+
+        return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}" data-creator="${creatorName}">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <strong>${emp ? emp.full_name : 'نامشخص'}</strong>
+              <small style="color:var(--text-muted);">${codeText}</small>
+            </div>
+            <span class="record-type-badge ${badgeClass}">${typeLabel}</span>
+          </div>
+          <div style="margin-top: 8px;"><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small></div>
+          <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">ثبت شده توسط: <strong>${creatorName}</strong></div>
+          <div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div>
+        </div>`;
+      }).join('');
+
+      list.innerHTML = html;
+      applyRecordsFilters();
+    }
+  }
+
+  async function deleteRecord(id) { if(confirm("حذف رکورد مرخصی تایید شود؟")) { await client.from('leave_records').delete().eq('id', id); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); } }
+
+  function formatHoursAndMinutes(totalMinutes) {
+    if (!totalMinutes || totalMinutes <= 0) return '۰ ساعت و ۰ دقیقه';
+    const hours = Math.floor(totalMinutes / 60); const mins = Math.floor(totalMinutes % 60);
+    let parts = []; if (hours > 0) parts.push(`${hours} ساعت`); if (mins > 0) parts.push(`${mins} دقیقه`);
+    return parts.length > 0 ? parts.join(' و ') : '۰ دقیقه';
+  }
+
+  function formatWorkDaysAndHours(totalMinutes) {
+    if (!totalMinutes || totalMinutes <= 0) return { daysText: '۰ روز کاری', totalHoursText: '۰ ساعت و ۰ دقیقه' };
+    const days = Math.floor(totalMinutes / WORK_DAY_MINUTES); const remMinutesAfterDays = totalMinutes % WORK_DAY_MINUTES;
+    const remHours = Math.floor(remMinutesAfterDays / 60); const remMins = Math.floor(remMinutesAfterDays % 60);
+    let dayParts = []; if (days > 0) dayParts.push(`${days} روز`); if (remHours > 0) dayParts.push(`${remHours} ساعت`); if (remMins > 0) dayParts.push(`${remMins} دقیقه`);
+    return { daysText: dayParts.length > 0 ? dayParts.join(' و ') : '۰ روز', totalHoursText: formatHoursAndMinutes(totalMinutes) };
+  }
 
   init();
 </script>
