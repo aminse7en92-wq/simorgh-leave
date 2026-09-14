@@ -248,50 +248,6 @@
       </h3>
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
     </div>
-
-    <!-- بخش وضعیت ماهانه با منوی افقی ماه‌ها و تفکیک مشاغل -->
-    <div id="tabMonthlyStatus" class="tab-content hidden">
-      <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
-      
-      <!-- منوی افقی انتخاب ماه‌ها -->
-      <div class="month-filters" id="statusMonthFilters" style="margin-bottom: 10px;">
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('01', this)">فروردین</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('02', this)">اردیبهشت</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('03', this)">خرداد</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('04', this)">تیر</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('05', this)">مرداد</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('06', this)">شهریور</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('07', this)">مهر</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('08', this)">آبان</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('09', this)">آذر</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('10', this)">دی</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('11', this)">بهمن</button>
-        <button type="button" class="month-btn" onclick="filterStatusByMonth('12', this)">اسفند</button>
-      </div>
-
-      <!-- منوی افقی دسته‌بندی مشاغل -->
-      <div class="category-filters" id="statusCategoryFilters">
-        <button type="button" class="filter-btn active" onclick="filterStatusByJob('all', this)">همه بخش‌ها</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('تولید', this)">تولید</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('فنی', this)">فنی</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('برق', this)">برق</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
-        <button type="button" class="filter-btn" onclick="filterStatusByJob('مهمان', this)">مهمان</button>
-      </div>
-
-      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
-      <div class="status-legend">
-        <div class="legend-item"><div class="legend-color box-blue"></div>روزانه</div>
-        <div class="legend-item"><div class="legend-color box-green"></div>ساعتی</div>
-        <div class="legend-item"><div class="legend-color box-black"></div>تعطیل رسمی</div>
-        <div class="legend-item"><div class="legend-color box-orange"></div>استعلاجی</div>
-        <div class="legend-item"><div class="legend-color box-red"></div>غیبت</div>
-        <div class="legend-item"><div class="legend-color box-purple"></div>سایر</div>
-      </div>
-      <div id="monthlyStatusList">در حال دریافت...</div>
-    </div>
     
     <div id="tabLeave" class="tab-content hidden">
       <div class="card" style="box-shadow: none; border:none; background: transparent;">
@@ -339,38 +295,87 @@
       </div>
     </div>
 
-    <!-- تب گزارش -->
-    <div id="tabRemaining" class="tab-content hidden">
-      <h2>📊 گزارش باقی‌مانده و اکسل</h2>
-      <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
+    <!-- بخش وضعیت ماهانه با منوی افقی ماه‌ها و تفکیک مشاغل -->
+    <div id="tabMonthlyStatus" class="tab-content hidden">
+      <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
+      
+      <!-- منوی افقی انتخاب ماه‌ها -->
+      <div class="month-filters" id="statusMonthFilters" style="margin-bottom: 10px;">
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('01', this)">فروردین</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('02', this)">اردیبهشت</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('03', this)">خرداد</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('04', this)">تیر</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('05', this)">مرداد</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('06', this)">شهریور</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('07', this)">مهر</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('08', this)">آبان</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('09', this)">آذر</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('10', this)">دی</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('11', this)">بهمن</button>
+        <button type="button" class="month-btn" onclick="filterStatusByMonth('12', this)">اسفند</button>
+      </div>
+
+      <!-- منوی افقی دسته‌بندی مشاغل -->
+      <div class="category-filters" id="statusCategoryFilters">
+        <button type="button" class="filter-btn active" onclick="filterStatusByJob('all', this)">همه بخش‌ها</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 1', this)">بسته‌بندی ۱</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('بسته بندی 2', this)">بسته‌بندی ۲</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('تولید', this)">تولید</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('فنی', this)">فنی</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('برق', this)">برق</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('اداری و مدیریت', this)">اداری و مدیریت</button>
+        <button type="button" class="filter-btn" onclick="filterStatusByJob('مهمان', this)">مهمان</button>
+      </div>
+
+      <input type="text" class="search-input" placeholder="جستجوی نام پرسنل..." oninput="filterDOM('monthlyStatusList', this.value)">
+      <div class="status-legend">
+        <div class="legend-item"><div class="legend-color box-blue"></div>روزانه</div>
+        <div class="legend-item"><div class="legend-color box-green"></div>ساعتی</div>
+        <div class="legend-item"><div class="legend-color box-black"></div>تعطیل رسمی</div>
+        <div class="legend-item"><div class="legend-color box-orange"></div>استعلاجی</div>
+        <div class="legend-item"><div class="legend-color box-red"></div>غیبت</div>
+        <div class="legend-item"><div class="legend-color box-purple"></div>سایر</div>
+      </div>
+      <div id="monthlyStatusList">در حال دریافت...</div>
+    </div>
+
+    <!-- تب سوابق -->
+    <div id="tabRecords" class="tab-content hidden">
+      <h2>📋 سوابق ثبت‌شده</h2>
       
       <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
-        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 بازه تاریخ برای خروجی اکسل (اختیاری)</h3>
+        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 فیلتر و خروجی اکسل سوابق</h3>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
           <div style="flex:1;">
             <label style="font-size:0.75rem;">از تاریخ:</label>
-            <input type="text" id="reportStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
+            <input type="text" id="filterStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
           </div>
           <div style="flex:1;">
             <label style="font-size:0.75rem;">تا تاریخ:</label>
-            <input type="text" id="reportEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
+            <input type="text" id="filterEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
           </div>
         </div>
-        <small style="color:var(--text-muted); display:block; text-align:right; font-size:0.75rem;">اگر تاریخ‌ها خالی باشند، کل سوابق سال خروجی داده می‌شود.</small>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="exportFilteredRecordsCSV()" style="margin-top:0; padding:10px; background:#059669; font-size:0.85rem; flex:1;">📥 دانلود اکسل این سوابق</button>
+          <button type="button" onclick="clearRecordsDateFilter()" style="margin-top:0; padding:10px; background:var(--border-color); color:var(--text-main); font-size:0.8rem; flex:1;">نمایش همه</button>
+        </div>
       </div>
 
-      <button class="btn-export" onclick="exportRemainingCSV()">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.768C6.35 8.68 7.5 9.5 8 9.5c.5 0 1.65-.82 2.884-2.052a.5.5 0 1 0-.768-.768C9.06 7.74 8.16 8.5 8 8.5c-.16 0-1.06-.76-2.116-1.82z"/><path d="M8 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 0z"/><path d="M1.5 11.5A.5.5 0 0 1 2 11h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-2z"/></svg>
-        دانلود گزارش در فایل اکسل
-      </button>
+      <div class="month-filters" id="monthFiltersContainer">
+        <button type="button" class="month-btn active" onclick="filterByMonth('all', this)">همه ماه‌ها</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('01', this)">فروردین</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('02', this)">اردیبهشت</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('03', this)">خرداد</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('04', this)">تیر</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('05', this)">مرداد</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('06', this)">شهریور</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('07', this)">مهر</button>
+        <button type="button" class="month-btn" onclick="filterByMonth('08', this)">آبان</button>
+      </div>
 
-      <input type="text" id="searchInputRemaining" class="search-input" placeholder="برای مشاهده گزارش، نام شخص را جستجو کنید..." oninput="filterRemaining(this.value)">
-      
-      <p id="remainingHint" style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-top: 20px;">
-        🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.
-      </p>
-
-      <div id="remainingList"></div>
+      <input type="text" class="search-input" placeholder="جستجوی نام، شماره پرسنلی یا تاریخ..." oninput="filterRecords(this.value)">
+      <div id="recordsList">در حال دریافت...</div>
+      <button id="logoutBtn" class="btn-logout" style="display:none;">خروج از حساب کاربری</button>
     </div>
 
     <!-- تب پرسنل با قابلیت کشویی (آکاردئون) -->
@@ -426,43 +431,38 @@
       <div id="employeesManageList">در حال دریافت...</div>
     </div>
 
-    <!-- تب سوابق -->
-    <div id="tabRecords" class="tab-content hidden">
-      <h2>📋 سوابق ثبت‌شده</h2>
+    <!-- تب گزارش -->
+    <div id="tabRemaining" class="tab-content hidden">
+      <h2>📊 گزارش باقی‌مانده و اکسل</h2>
+      <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top:-10px; margin-bottom: 20px;">سهمیه سالانه: ۱۹۰ ساعت و ۴۰ دقیقه</p>
       
       <div class="card" style="background:#f1f5f9; border: 1px solid var(--border-color); margin-bottom: 15px;">
-        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 فیلتر و خروجی اکسل سوابق</h3>
+        <h3 style="font-size: 0.9rem; text-align:right; margin-bottom: 10px;">📅 بازه تاریخ برای خروجی اکسل (اختیاری)</h3>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
           <div style="flex:1;">
             <label style="font-size:0.75rem;">از تاریخ:</label>
-            <input type="text" id="filterStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
+            <input type="text" id="reportStartDate" placeholder="1403/01/01" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
           </div>
           <div style="flex:1;">
             <label style="font-size:0.75rem;">تا تاریخ:</label>
-            <input type="text" id="filterEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;" oninput="applyRecordsDateFilter()">
+            <input type="text" id="reportEndDate" placeholder="1403/12/29" autocomplete="off" inputmode="numeric" maxlength="10" style="text-align:center;">
           </div>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" onclick="exportFilteredRecordsCSV()" style="margin-top:0; padding:10px; background:#059669; font-size:0.85rem; flex:1;">📥 دانلود اکسل این سوابق</button>
-          <button type="button" onclick="clearRecordsDateFilter()" style="margin-top:0; padding:10px; background:var(--border-color); color:var(--text-main); font-size:0.8rem; flex:1;">نمایش همه</button>
-        </div>
+        <small style="color:var(--text-muted); display:block; text-align:right; font-size:0.75rem;">اگر تاریخ‌ها خالی باشند، کل سوابق سال خروجی داده می‌شود.</small>
       </div>
 
-      <div class="month-filters" id="monthFiltersContainer">
-        <button type="button" class="month-btn active" onclick="filterByMonth('all', this)">همه ماه‌ها</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('01', this)">فروردین</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('02', this)">اردیبهشت</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('03', this)">خرداد</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('04', this)">تیر</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('05', this)">مرداد</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('06', this)">شهریور</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('07', this)">مهر</button>
-        <button type="button" class="month-btn" onclick="filterByMonth('08', this)">آبان</button>
-      </div>
+      <button class="btn-export" onclick="exportRemainingCSV()">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.768C6.35 8.68 7.5 9.5 8 9.5c.5 0 1.65-.82 2.884-2.052a.5.5 0 1 0-.768-.768C9.06 7.74 8.16 8.5 8 8.5c-.16 0-1.06-.76-2.116-1.82z"/><path d="M8 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 0z"/><path d="M1.5 11.5A.5.5 0 0 1 2 11h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-2z"/></svg>
+        دانلود گزارش در فایل اکسل
+      </button>
 
-      <input type="text" class="search-input" placeholder="جستجوی نام، شماره پرسنلی یا تاریخ..." oninput="filterRecords(this.value)">
-      <div id="recordsList">در حال دریافت...</div>
-      <button id="logoutBtn" class="btn-logout" style="display:none;">خروج از حساب کاربری</button>
+      <input type="text" id="searchInputRemaining" class="search-input" placeholder="برای مشاهده گزارش، نام شخص را جستجو کنید..." oninput="filterRemaining(this.value)">
+      
+      <p id="remainingHint" style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-top: 20px;">
+        🔍 جهت جلوگیری از شلوغی صفحه، لطفاً نام شخص مورد نظر را جستجو کنید.
+      </p>
+
+      <div id="remainingList"></div>
     </div>
 
   </div>
@@ -540,11 +540,11 @@
 
 <div id="tabBar" class="tab-bar hidden">
   <button class="tab-item active" onclick="switchTab('tabDashboard', this)"><span>🏠</span>داشبورد</button>
-  <button class="tab-item" onclick="switchTab('tabMonthlyStatus', this)"><span>📅</span>وضعیت</button>
   <button class="tab-item" onclick="switchTab('tabLeave', this)"><span>📝</span>ثبت</button>
-  <button class="tab-item" onclick="switchTab('tabRemaining', this)"><span>📊</span>گزارش</button>
-  <button class="tab-item" onclick="switchTab('tabEmployees', this)"><span>👥</span>پرسنل</button>
+  <button class="tab-item" onclick="switchTab('tabMonthlyStatus', this)"><span>📅</span>وضعیت</button>
   <button class="tab-item" onclick="switchTab('tabRecords', this)"><span>📋</span>سوابق</button>
+  <button class="tab-item" onclick="switchTab('tabEmployees', this)"><span>👥</span>پرسنل</button>
+  <button class="tab-item" onclick="switchTab('tabRemaining', this)"><span>📊</span>گزارش</button>
 </div>
 
 <script>
@@ -1274,6 +1274,7 @@
           if(catFilters) catFilters.style.display = 'flex';
         }
 
+        // فراخوانی متدهای دریافت اطلاعات به ترتیب
         await loadEmployeesList(); 
         await loadDashboard(); 
         await loadMonthlyStatus();
@@ -1390,7 +1391,7 @@
           <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--primary);">${employees.length}</span>
           <strong>کل پرسنل 👥</strong>
         </div>
-        <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[5])">
+        <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[3])">
           <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span>
           <strong>کل سوابق 📋</strong>
         </div>
@@ -1466,7 +1467,7 @@
       sortedPositions.forEach(pos => {
         let displayStyle = (window.currentStatusJobFilter === 'all' || window.currentStatusJobFilter === pos) ? '' : 'display:none;';
         html += `<div data-pos-group="${pos}" style="${displayStyle}">`;
-        html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos}</div>`;
+        html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos} (${grouped[pos].length} نفر)</div>`;
         
         grouped[pos].forEach(emp => {
           const empRecords = (recData || []).filter(r => r.employee_id === emp.id);
