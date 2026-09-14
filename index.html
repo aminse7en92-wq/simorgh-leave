@@ -189,6 +189,7 @@
 
 <div class="container">
   
+  <!-- صفحه ورود -->
   <div id="loginSection">
     <h2>🔐 ورود سیستم</h2>
     <form id="loginForm">
@@ -207,6 +208,7 @@
 
   <div id="appSection" class="hidden">
 
+    <!-- تب داشبورد -->
     <div id="tabDashboard" class="tab-content">
       <div class="dashboard-header">
         <img src="icon.png" alt="لوگو سیمرغ" class="app-logo">
@@ -249,6 +251,7 @@
       <div id="dashboardTomorrowLeave"><div style="text-align: center; color: var(--text-muted);">در حال بررسی...</div></div>
     </div>
     
+    <!-- تب ثبت مرخصی -->
     <div id="tabLeave" class="tab-content hidden">
       <div class="card" style="box-shadow: none; border:none; background: transparent;">
         <h2>📝 ثبت مرخصی جدید</h2>
@@ -295,7 +298,7 @@
       </div>
     </div>
 
-    <!-- بخش وضعیت ماهانه با منوی افقی ماه‌ها و تفکیک مشاغل -->
+    <!-- تب وضعیت ماهانه -->
     <div id="tabMonthlyStatus" class="tab-content hidden">
       <h2 id="currentMonthLabel">📅 وضعیت ماهانه</h2>
       
@@ -378,7 +381,7 @@
       <button id="logoutBtn" class="btn-logout" style="display:none;">خروج از حساب کاربری</button>
     </div>
 
-    <!-- تب پرسنل با قابلیت کشویی (آکاردئون) -->
+    <!-- تب پرسنل با قابلیت کشویی -->
     <div id="tabEmployees" class="tab-content hidden">
       <h2>👥 مدیریت پرسنل</h2>
       
@@ -1143,7 +1146,9 @@
     alert('در حال آماده‌سازی فایل اکسل...');
     
     try {
-      const { data: { session } } = await client.auth.getSession();
+      const { data, error } = await client.auth.getSession();
+      if(error) throw error;
+      const session = data?.session;
       const userEmail = session ? session.user.email : '';
 
       const { data: empData, error: empErr } = await client.from('employees').select('id, personnel_code, full_name, position');
@@ -1240,8 +1245,13 @@
 
   async function init() {
     try {
-      const { data: { session }, error } = await client.auth.getSession();
-      if (error) throw error;
+      const { data, error } = await client.auth.getSession();
+      if (error) {
+        await client.auth.signOut();
+        throw error;
+      }
+      
+      const session = data?.session;
 
       if (session) {
         document.getElementById('loginSection').classList.add('hidden');
@@ -1274,7 +1284,6 @@
           if(catFilters) catFilters.style.display = 'flex';
         }
 
-        // فراخوانی متدهای دریافت اطلاعات به ترتیب
         await loadEmployeesList(); 
         await loadDashboard(); 
         await loadMonthlyStatus();
@@ -1286,311 +1295,226 @@
       }
     } catch(err) {
       console.error("Init Error: ", err);
-      alert("خطا در ارتباط با سرور. لطفاً صفحه را رفرش کنید.");
-    }
-  }
-
-  function gregorianToShamsi(gy, gm, gd) {
-    var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    var jy = (gy <= 1600) ? 0 : 979; gy -= (gy <= 1600) ? 621 : 1600; var gy2 = (gm > 2) ? (gy + 1) : gy;
-    var days = (365 * gy) + (parseInt((gy2 + 3) / 4)) - (parseInt((gy2 + 99) / 100)) + (parseInt((gy2 + 399) / 400)) - 80 + gd + g_d_m[gm - 1];
-    jy += 33 * (parseInt(days / 12053)); days %= 12053; jy += 4 * (parseInt(days / 1461)); days %= 1461;
-    if (days > 365) { jy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
-    var jm = (days < 186) ? 1 + parseInt(days / 31) : 7 + parseInt((days - 186) / 30);
-    var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
-    return { year: jy, month: String(jm).padStart(2, '0'), day: String(jd).padStart(2, '0') };
-  }
-
-  function shamsiToGregorian(jy, jm, jd) {
-    jy = parseInt(jy); jm = parseInt(jm); jd = parseInt(jd);
-    var sal_a = [0, 31, ((jy % 4 === 0 && jy % 100 !== 0) || (jy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    var gy = (jy <= 979) ? 621 : 1600; jy -= (jy <= 979) ? 0 : 979;
-    var days = (365 * jy) + (parseInt(jy / 33) * 8) + parseInt(((jy % 33) + 3) / 4) + 78 + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
-    gy += 400 * parseInt(days / 146097); days %= 146097; if (days > 36524) { gy += 100 * parseInt(--days / 36524); days %= 36524; if (days >= 365) days++; }
-    gy += 4 * parseInt(days / 1461); days %= 1461; if (days > 365) { gy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
-    var gd = days + 1; var gm; for (gm = 0; gm < 13; gm++) { var v = sal_a[gm]; if (gd <= v) break; gd -= v; }
-    return { gy: gy, gm: gm, gd: gd };
-  }
-
-  function toEnglishDigits(str) { return String(str).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
-
-  function parseManualInputToDate(dateId, timeId) {
-    const rawDate = document.getElementById(dateId).value; const rawTime = document.getElementById(timeId).value;
-    if (!rawDate || !rawTime) return null;
-    const cleanDate = toEnglishDigits(rawDate).replace(/\s/g, '');
-    const dateParts = cleanDate.split('/').map(Number);
-    const timeParts = toEnglishDigits(rawTime).trim().split(':').map(Number);
-    if (dateParts.length !== 3 || timeParts.length !== 2) return null;
-    const [year, month, day] = dateParts; const [hour, minute] = timeParts;
-    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) return null;
-    const gDate = shamsiToGregorian(year, month, day);
-    return new Date(gDate.gy, gDate.gm - 1, gDate.gd, hour, minute, 0);
-  }
-
-  async function loadDashboard() {
-    const containerStats = document.getElementById('dashboardStats');
-    const containerToday = document.getElementById('dashboardTodayLeave');
-    const containerTomorrow = document.getElementById('dashboardTomorrowLeave');
-    
-    try {
-      const { data: { session } } = await client.auth.getSession();
-      const userEmail = session ? session.user.email : '';
-
-      const { data: empData, error: empErr } = await client.from('employees').select('id, personnel_code, full_name, position');
-      const { data: recData, error: recErr } = await client.from('leave_records').select('*');
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('appSection').classList.add('hidden');
+      document.getElementById('tabBar').classList.add('hidden');
       
-      if (empErr || recErr) {
-        if(containerStats) containerStats.innerHTML = `<div style="text-align:center; color:var(--danger); grid-column:span 2;">خطا در دریافت اطلاعات دیتابیس. پیام خطا: ${empErr?.message || recErr?.message}</div>`;
-        return;
+      const status = document.getElementById('loginStatus');
+      if (status) {
+        status.style.color = "var(--danger)";
+        status.innerText = "خطا در ارتباط: " + err.message;
       }
-
-      let employees = (empData || []).filter(emp => isAllowedEmployee(emp.position, userEmail));
-      const allowedEmpIds = new Set(employees.map(e => e.id));
-      
-      const empMap = {};
-      employees.forEach(e => { empMap[e.id] = e; });
-
-      let records = (recData || []).filter(r => allowedEmpIds.has(r.employee_id)).map(r => ({
-        ...r,
-        employees: empMap[r.employee_id] || null
-      }));
-
-      const today = new Date();
-      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
-      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-      
-      const startOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
-      const endOfTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 23, 59, 59);
-
-      const activeToday = records.filter(r => new Date(r.start_at) <= endOfToday && new Date(r.end_at) >= startOfToday);
-      const activeTomorrow = records.filter(r => new Date(r.start_at) <= endOfTomorrow && new Date(r.end_at) >= startOfTomorrow);
-      
-      activeToday.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
-      activeTomorrow.sort((a, b) => ((a.employees && a.employees.full_name) || '').localeCompare((b.employees && b.employees.full_name) || '', 'fa'));
-
-      if (activeToday.length > 0) {
-        containerToday.innerHTML = activeToday.map(r => {
-          const emp = r.employees;
-          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-          const badgeClass = getBadgeClass(r.record_type);
-          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
-        }).join('');
-      } else containerToday.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">امروز کسی در مرخصی نیست. ✅</p>`;
-      
-      if (activeTomorrow.length > 0) {
-        containerTomorrow.innerHTML = activeTomorrow.map(r => {
-          const emp = r.employees;
-          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-          const badgeClass = getBadgeClass(r.record_type);
-          return `<div class="card" style="padding: 12px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;"><span><strong>${emp ? emp.full_name : 'نامشخص'}</strong><small style="color:var(--text-muted);">${codeText}</small><br><small style="color:var(--text-muted);">${emp && emp.position ? emp.position : ''}</small></span><span class="record-type-badge ${badgeClass}" style="font-size:0.75rem;">${TYPE_LABELS[r.record_type] || r.record_type}</span></div>`;
-        }).join('');
-      } else containerTomorrow.innerHTML = `<p style="color: var(--text-muted); text-align: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">برای فردا مرخصی ثبت نشده است. 🗓️</p>`;
-      
-      containerStats.innerHTML = `
-        <div class="detail-item info clickable-card" style="text-align:center;" onclick="switchTab('tabEmployees', document.querySelectorAll('.tab-item')[4])">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--primary);">${employees.length}</span>
-          <strong>کل پرسنل 👥</strong>
-        </div>
-        <div class="detail-item warning clickable-card" style="text-align:center;" onclick="switchTab('tabRecords', document.querySelectorAll('.tab-item')[3])">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--warning);">${records.length}</span>
-          <strong>کل سوابق 📋</strong>
-        </div>
-        <div class="detail-item danger" style="text-align:center;">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:var(--danger);">${activeToday.length}</span>
-          <strong>مرخصی امروز</strong>
-        </div>
-        <div class="detail-item" style="text-align:center; background:#f3e8ff; border-color:#d8b4fe;">
-          <span style="font-size: 1.5rem; display:block; font-weight:bold; color:#9333ea;">${activeTomorrow.length}</span>
-          <strong style="color:#7e22ce;">مرخصی فردا</strong>
-        </div>
-      `;
-    } catch (e) {
-      if(containerStats) containerStats.innerHTML = `<div style="text-align:center; color:var(--danger); grid-column:span 2;">خطا: ${e.message}</div>`;
     }
   }
 
-  async function loadMonthlyStatus() {
-    const container = document.getElementById('monthlyStatusList');
-    if (!container) return;
-    
+  async function loadEmployeesList() {
     try {
-      const { data: { session } } = await client.auth.getSession();
-      const userEmail = session ? session.user.email : '';
-
       const { data: empData, error: empErr } = await client.from('employees').select('*');
-      const { data: recData, error: recErr } = await client.from('leave_records').select('*');
+      if (empErr) throw empErr;
+
+      const { data: sessionRes } = await client.auth.getSession();
+      const userEmail = sessionRes?.session?.user?.email || '';
+      const isAdmin = userEmail.toLowerCase() === 'amin.se7en92@gmail.com';
+
+      let data = empData || [];
+      data = data.filter(e => isAllowedEmployee(e.position, userEmail));
+
+      const select = document.getElementById('employeeSelect'); 
+      const manageList = document.getElementById('employeesManageList');
       
-      if (empErr || recErr) {
-        container.innerHTML = `<p style='text-align:center; color:var(--danger); font-weight:bold;'>خطا در دیتابیس: ${empErr?.message || recErr?.message}</p>`;
-        return;
-      }
-
-      let employees = (empData || []).filter(emp => isAllowedEmployee(emp.position, userEmail));
-      if (employees.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>پرسنلی ثبت نشده است.</p>";
-        return;
-      }
-
-      employees.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
-
-      const today = new Date();
-      const tehranDateStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(today);
-      const [tm, td, ty] = tehranDateStr.split('/').map(Number);
-      const currentShamsiToday = gregorianToShamsi(ty, tm, td);
-
-      const selectedMonth = window.currentStatusMonth || currentShamsiToday.month;
-      const currentYear = currentShamsiToday.year;
-      
-      const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-      const monthLabelEl = document.getElementById('currentMonthLabel');
-      if (monthLabelEl) {
-        monthLabelEl.innerHTML = `📅 وضعیت ماه: <span style="color:var(--primary)">${monthNames[parseInt(selectedMonth) - 1]} ${currentYear}</span>`;
-      }
-
-      let grouped = {};
-      employees.forEach(emp => {
-        let pos = emp.position || 'سایر';
-        if (!grouped[pos]) grouped[pos] = [];
-        grouped[pos].push(emp);
-      });
-
-      let html = '';
-      const positionsOrder = ['بسته بندی 1', 'بسته بندی 2', 'تولید', 'فنی', 'برق', 'اداری و مدیریت', 'مهمان', 'سایر'];
-      let sortedPositions = Object.keys(grouped).sort((a, b) => {
-        let idxA = positionsOrder.indexOf(a);
-        let idxB = positionsOrder.indexOf(b);
-        if (idxA === -1) idxA = 99;
-        if (idxB === -1) idxB = 99;
-        return idxA - idxB;
-      });
-
-      sortedPositions.forEach(pos => {
-        let displayStyle = (window.currentStatusJobFilter === 'all' || window.currentStatusJobFilter === pos) ? '' : 'display:none;';
-        html += `<div data-pos-group="${pos}" style="${displayStyle}">`;
-        html += `<div style="font-weight: bold; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; margin: 15px 0 8px 0; font-size: 0.9rem; color: var(--text-main);">📌 بخش / شغل: ${pos} (${grouped[pos].length} نفر)</div>`;
+      if (data.length > 0) {
+        data.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fa'));
+        allEmployeesData = data;
         
-        grouped[pos].forEach(emp => {
-          const empRecords = (recData || []).filter(r => r.employee_id === emp.id);
-          
-          let dailyLeavesMap = {};
-          empRecords.forEach(rec => {
-            let sDate = new Date(rec.start_at);
-            let eDate = new Date(rec.end_at);
-            
-            let curr = new Date(sDate.getTime());
-            while (curr <= eDate) {
-              let gY = curr.getFullYear();
-              let gM = curr.getMonth() + 1;
-              let gD = curr.getDate();
-              let sObj = gregorianToShamsi(gY, gM, gD);
-              
-              if (sObj.year == currentYear && sObj.month == selectedMonth) {
-                dailyLeavesMap[parseInt(sObj.day)] = rec.record_type;
-              }
-              curr.setDate(curr.getDate() + 1);
-            }
-          });
-
-          let targetDay = (selectedMonth === currentShamsiToday.month) ? parseInt(currentShamsiToday.day) : 1;
-          let startDay = Math.max(1, targetDay - 6);
-          let endDay = startDay + 6;
-
-          let boxesHtml = '';
-          for (let day = startDay; day <= endDay; day++) {
-            let recType = dailyLeavesMap[day];
-            if (recType) {
-              let colorClass = '';
-              switch(recType) {
-                case 'daily_leave': case 'daily': colorClass = 'box-blue'; break;
-                case 'hourly_leave': colorClass = 'box-green'; break;
-                case 'sick_leave': colorClass = 'box-orange'; break;
-                case 'official_holiday': colorClass = 'box-black'; break;
-                case 'absence': colorClass = 'box-red'; break;
-                case 'other': colorClass = 'box-purple'; break;
-              }
-              boxesHtml += `<div class="status-box-wrap"><div class="status-box ${colorClass || 'box-blue'}">✔</div><span class="box-date">${day} ${monthNames[parseInt(selectedMonth)-1].substring(0,3)}</span></div>`;
-            } else {
-              boxesHtml += `<div class="status-box-wrap"><div class="status-box empty"></div><span class="box-date">${day} ${monthNames[parseInt(selectedMonth)-1].substring(0,3)}</span></div>`;
-            }
-          }
-
-          const codeText = emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-          html += `<div class="emp-item" data-name="${emp.full_name} ${emp.personnel_code || ''}"><div style="flex:1;"><strong style="color:var(--primary)">${emp.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small></div><div class="boxes-container">${boxesHtml}</div></div>`;
-        });
-        html += `</div>`;
-      });
-
-      container.innerHTML = html || "<p style='text-align:center; color:var(--text-muted);'>پرسنلی یافت نشد.</p>";
-    } catch(e) {
-      container.innerHTML = `<p style='text-align:center; color:var(--danger); font-weight:bold;'>خطا در سیستم وضعیت: ${e.message}</p>`;
-    }
-  }
-
-  async function loadRecords() {
-    const list = document.getElementById('recordsList');
-    if (!list) return;
-    
-    try {
-      const { data: { session } } = await client.auth.getSession();
-      const userEmail = session ? session.user.email : '';
-
-      const { data: empData, error: empErr } = await client.from('employees').select('*');
-      const { data: recData, error: recErr } = await client.from('leave_records').select('*').order('start_at', { ascending: false });
-      
-      if (empErr || recErr) {
-        list.innerHTML = `<p style='text-align:center; color:var(--danger);'>خطا در دریافت سوابق: ${empErr?.message || recErr?.message}</p>`;
-        return;
-      }
-
-      if (recData && empData) {
-        let employees = empData.filter(emp => isAllowedEmployee(emp.position, userEmail));
-        const allowedEmpIds = new Set(employees.map(e => e.id));
-        const empMap = {};
-        empData.forEach(e => { empMap[e.id] = e; });
-
-        let data = recData.filter(r => allowedEmpIds.has(r.employee_id)).map(r => ({
-          ...r,
-          employees: empMap[r.employee_id] || null
-        }));
-
-        let html = data.map(r => {
-          const safeNote = r.note ? r.note.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") : "";
-          const emp = r.employees;
-          const codeText = emp && emp.personnel_code ? ` (کد: ${emp.personnel_code})` : '';
-          
-          const sd = new Date(r.start_at);
-          const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
-          const dateStr = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`; 
-          const dateStrNoZero = `${sShamsi.year}/${sShamsi.month}/${sShamsi.day}`; 
-          
-          const searchData = `${emp ? emp.full_name : ''} ${emp ? emp.personnel_code : ''} ${dateStr} ${dateStrNoZero}`;
-          const recordMonth = String(sShamsi.month);
-
-          const badgeClass = getBadgeClass(r.record_type);
-          const typeLabel = TYPE_LABELS[r.record_type] || r.record_type;
-          const creatorName = getPersianName(r.created_by);
-
-          return `<div class="card" data-month="${recordMonth}" data-start-time="${new Date(r.start_at).getTime()}" data-search="${normalizeText(searchData)}" data-creator="${creatorName}">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <div>
-                <strong>${emp ? emp.full_name : 'نامشخص'}</strong>
-                <small style="color:var(--text-muted);">${codeText}</small>
-              </div>
-              <span class="record-type-badge ${badgeClass}">${typeLabel}</span>
-            </div>
-            <div style="margin-top: 8px;"><small>از: <span dir="ltr">${new Date(r.start_at).toLocaleString('fa-IR',{hour12:false})}</span> تا <span dir="ltr">${new Date(r.end_at).toLocaleString('fa-IR',{hour12:false})}</span></small></div>
-            <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">ثبت شده توسط: <strong>${creatorName}</strong></div>
-            <div class="card-actions"><button class="btn-edit" onclick="openEditRecordModal('${r.id}', '${r.record_type}', '${r.start_at}', '${r.end_at}', '${safeNote}')">ویرایش</button><button class="btn-delete" onclick="deleteRecord('${r.id}')">حذف</button></div>
-          </div>`;
+        select.innerHTML = `<option value="">انتخاب کنید...</option>` + data.map(e => {
+          const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+          return `<option value="${e.id}">${e.full_name}${codeText}</option>`;
         }).join('');
-
-        list.innerHTML = html || "<p style='text-align:center; color:var(--text-muted);'>رکوردی ثبت نشده است.</p>";
-        applyRecordsFilters();
+        
+        manageList.innerHTML = data.map(e => {
+          const codeText = e.personnel_code ? ` (کد: ${e.personnel_code})` : '';
+          const actionsHtml = isAdmin ? `<div class="emp-actions"><button class="btn-edit" onclick="openEditEmployeeModal('${e.id}', '${e.personnel_code || ''}', '${e.full_name}', '${e.position || ''}')">ویرایش</button><button class="btn-delete" onclick="deleteEmployee('${e.id}', '${e.full_name}')">حذف</button></div>` : '';
+          return `<div class="emp-item" data-name="${e.full_name} ${e.personnel_code || ''}" data-job="${e.position || 'سایر'}"><div class="emp-info"><strong>${e.full_name}</strong><small style="color:var(--text-muted);">${codeText}</small><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${e.position || 'سایر'}</div></div>${actionsHtml}</div>`;
+        }).join('');
+      } else {
+        allEmployeesData = []; 
+        if(select) select.innerHTML = `<option value="">بدون پرسنل</option>`; 
+        if(manageList) manageList.innerHTML = `<p style="text-align:center;">خالی</p>`;
       }
     } catch(e) {
-      list.innerHTML = `<p style='text-align:center; color:var(--danger); font-weight:bold;'>خطا در سیستم سوابق: ${e.message}</p>`;
+      console.error(e);
+      const manageList = document.getElementById('employeesManageList');
+      if(manageList) manageList.innerHTML = `<p style="color:red; text-align:center;">خطا در دریافت پرسنل: ${e.message}</p>`;
     }
   }
+
+  function openEditEmployeeModal(id, code, name, pos) {
+    document.getElementById('editEmpId').value = id; document.getElementById('editEmpPersonnelCode').value = code==='null'?'':code; document.getElementById('editEmpFullName').value = name; 
+    const posSelect = document.getElementById('editEmpPosition');
+    let posExists = Array.from(posSelect.options).some(opt => opt.value === pos);
+    posSelect.value = posExists ? pos : 'سایر';
+    document.getElementById('editEmployeeModal').classList.remove('hidden');
+  }
+  function closeEditEmployeeModal() { document.getElementById('editEmployeeModal').classList.add('hidden'); }
+
+  document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { data: { session } } = await client.auth.getSession();
+    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
+      alert("شما به این بخش دسترسی ندارید.");
+      return;
+    }
+
+    let pCode = document.getElementById('editEmpPersonnelCode').value.trim();
+    if (pCode === "") pCode = null;
+    await client.from('employees').update({ personnel_code: pCode, full_name: document.getElementById('editEmpFullName').value, position: document.getElementById('editEmpPosition').value }).eq('id', document.getElementById('editEmpId').value);
+    closeEditEmployeeModal(); loadEmployeesList();
+  });
+
+  async function deleteEmployee(id, name) {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session || session.user.email.toLowerCase() !== 'amin.se7en92@gmail.com') {
+      alert("شما به این بخش دسترسی ندارید.");
+      return;
+    }
+
+    if (confirm(`حذف ${name} و سوابقش؟`)) { await client.from('leave_records').delete().eq('employee_id', id); await client.from('employees').delete().eq('id', id); loadEmployeesList(); loadRecords(); loadDashboard(); loadMonthlyStatus(); loadRemainingLeave(); }
+  }
+
+  document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('leaveStatus');
+    const submitBtn = document.getElementById('submitLeaveBtn');
+    
+    if (!document.getElementById('endDateManual').value) {
+        document.getElementById('endDateManual').value = document.getElementById('startDateManual').value;
+    }
+
+    const recordType = document.getElementById('recordType').value;
+    
+    const startTimeInput = document.getElementById('startTimeManual');
+    const endTimeInput = document.getElementById('endTimeManual');
+    const wasDisabled = startTimeInput.disabled;
+    
+    startTimeInput.disabled = false;
+    endTimeInput.disabled = false;
+
+    const startObj = parseManualInputToDate('startDateManual', 'startTimeManual');
+    const endObj = parseManualInputToDate('endDateManual', 'endTimeManual');
+
+    if (wasDisabled) {
+      startTimeInput.disabled = true;
+      endTimeInput.disabled = true;
+    }
+    
+    if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ/ساعت اشتباه است (مثال: 1403/06/12)."; return; }
+    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
+
+    const selectedEmpId = document.getElementById('employeeSelect').value;
+
+    if (!selectedEmpId) {
+      status.style.color = "var(--danger)";
+      status.innerText = "لطفاً یک پرسنل از لیست انتخاب کنید.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = "در حال ثبت...";
+    status.style.color = "var(--primary)";
+    status.innerText = "⏳ در حال ارسال به سرور...";
+
+    const { error } = await client.from('leave_records').insert([{ 
+      employee_id: selectedEmpId, 
+      record_type: recordType, 
+      start_at: startObj.toISOString(), 
+      end_at: endObj.toISOString(), 
+      note: document.getElementById('note').value 
+    }]);
+
+    if (!error) { 
+      status.style.color = "var(--success)"; 
+      status.innerText = "✅ مرخصی با موفقیت ثبت شد! می‌توانید شخص بعدی را ثبت کنید."; 
+      
+      document.getElementById('leaveForm').reset();
+      handleRecordTypeChange();
+      filterLeaveSelect('');
+      
+      loadDashboard(); 
+      loadMonthlyStatus(); 
+    } else { 
+      status.style.color = "var(--danger)"; 
+      status.innerText = "خطا در ثبت: " + error.message; 
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = "ثبت نهایی مرخصی";
+  });
+
+  function openEditRecordModal(id, type, start, end, note) {
+    document.getElementById('editRecordId').value = id;
+    document.getElementById('editRecordType').value = type;
+    
+    const sd = new Date(start); const ed = new Date(end);
+    const sShamsi = gregorianToShamsi(sd.getFullYear(), sd.getMonth()+1, sd.getDate());
+    const eShamsi = gregorianToShamsi(ed.getFullYear(), ed.getMonth()+1, ed.getDate());
+    
+    document.getElementById('editStartDateManual').value = `${sShamsi.year}/${String(sShamsi.month).padStart(2,'0')}/${String(sShamsi.day).padStart(2,'0')}`;
+    document.getElementById('editStartTimeManual').value = String(sd.getHours()).padStart(2,'0') + ':' + String(sd.getMinutes()).padStart(2,'0');
+    document.getElementById('editEndDateManual').value = `${eShamsi.year}/${String(eShamsi.month).padStart(2,'0')}/${String(eShamsi.day).padStart(2,'0')}`;
+    document.getElementById('editEndTimeManual').value = String(ed.getHours()).padStart(2,'0') + ':' + String(ed.getMinutes()).padStart(2,'0');
+    document.getElementById('editNote').value = (note && note !== 'null') ? note : '';
+    
+    document.getElementById('editRecordModal').classList.remove('hidden');
+  }
+
+  function closeEditRecordModal() { document.getElementById('editRecordModal').classList.add('hidden'); }
+
+  document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('editRecordStatus');
+    status.style.color = "var(--primary)";
+    status.innerText = "در حال ذخیره تغییرات...";
+    
+    if (!document.getElementById('editEndDateManual').value) {
+        document.getElementById('editEndDateManual').value = document.getElementById('editStartDateManual').value;
+    }
+
+    const startObj = parseManualInputToDate('editStartDateManual', 'editStartTimeManual');
+    const endObj = parseManualInputToDate('editEndDateManual', 'editEndTimeManual');
+    
+    if (!startObj || !endObj) { status.style.color = "var(--danger)"; status.innerText = "فرمت تاریخ یا ساعت اشتباه است."; return; }
+    if (endObj <= startObj) { status.style.color = "var(--danger)"; status.innerText = "ساعت پایان باید بعد از ساعت شروع باشد."; return; }
+    
+    const recordId = document.getElementById('editRecordId').value;
+    if (!recordId) {
+      status.style.color = "var(--danger)";
+      status.innerText = "شناسه رکورد نامعتبر است.";
+      return;
+    }
+
+    const { error } = await client.from('leave_records').update({
+      record_type: document.getElementById('editRecordType').value,
+      start_at: startObj.toISOString(),
+      end_at: endObj.toISOString(),
+      note: document.getElementById('editNote').value
+    }).eq('id', recordId);
+    
+    if (!error) { 
+        status.style.color = "var(--success)";
+        status.innerText = "تغییرات با موفقیت ذخیره شد!";
+        setTimeout(() => {
+          closeEditRecordModal(); 
+          loadRecords(); 
+          loadDashboard(); 
+          loadMonthlyStatus(); 
+          loadRemainingLeave();
+          status.innerText = "";
+        }, 500);
+    } else {
+        status.style.color = "var(--danger)";
+        status.innerText = "خطا در ویرایش: " + error.message;
+    }
+  });
 
   init();
 </script>
